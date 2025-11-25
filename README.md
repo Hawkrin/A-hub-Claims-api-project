@@ -42,16 +42,39 @@ ASP.Claims.API/
 
 Projektet är organiserat enligt följande lager och mappar:
 
-•	API  
-Controllers, DTOs, validerare och resurser för presentation och kommunikation med klienter.
-•	Application  
-CQRS (kommandon, queries, handlers), tjänste- och repositorygränssnitt, affärslogik och eventuella AutoMapper-profiler.
-•	Domain  
-Domänmodeller, enum-typer och annan domänspecifik logik.
-•	Infrastructures  
-Implementering av datalager och andra tekniska beroenden.
-•	Middleware  
-Globala filter och felhantering.
+-	**API**
+  - *Controllers*: API-kontrollers för hantering av HTTP-förfrågningar (t.ex. PropertyClaimController, VehicleClaimController)
+  - *DTOs*: Data Transfer Objects för kommunikation mellan klient och server
+  - *Validators*: Valideringsklasser för DTOs med FluentValidation
+- **Application**
+  - **CQRS**: Kommandon, queries och handlers för affärslogik (t.ex. CreatePropertyClaimCommand, GetAllClaimsQuery, ClaimQueryHandler)
+  - **Interfaces**: Tjänste- och repositorygränssnitt (t.ex. IClaimRepository)
+  - **Services**: Implementering av affärslogik och tjänster (t.ex. ClaimStatusEvaluator)
+-	**Domain**
+  - *Entities*: Domänmodeller (t.ex. Claim, PropertyClaim, VehicleClaim)
+  - *Enums*: Enum-typer för domänen (t.ex. ClaimStatus, ClaimType)
+- **Infrastructures**
+  - *Repositories*: Implementering av datalager och tekniska beroenden (t.ex. InMemoryClaimRepository)
+- **Middleware**
+  - *Filters*: Globala filter för t.ex. validering (FluentValidationActionFilter)
+  - *ExceptionHandling*: Global felhantering (ExceptionHandlingMiddleware)
+-	**Resources**
+  -	*Resursfiler* för lokalisering och felmeddelanden
+
+
+- **Application**
+  - *Interfaces*: Definitioner för tjänster och repositorys (t.ex. `IClaimService`, `IClaimRepository`)
+  - *Services*: Implementering av affärslogik och tjänster (t.ex. `ClaimService`)
+- **Domain**
+  - *Enums, Models, Validation*: Domänmodeller, enum-typer och valideringsregler
+- **Infrastructures**
+  - *Repositories*: Implementering av datalager, t.ex. in-memory repository
+- **Pages/Components**
+  - Blazor-komponenter för användargränssnittet
+- **Resources**
+  - Resursfiler för lokalisering och felmeddelanden
+- **Shared**
+  - Delade komponenter/layouts
 
 ### Flöde
 
