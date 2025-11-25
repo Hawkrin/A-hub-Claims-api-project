@@ -1,0 +1,123 @@
+@ASP.Claims.API_HostAddress = http://localhost:5020
+@propertyClaimId = d7c9eb85-5c14-43a1-9d05-56a662ddd3e1
+
+### Get all claims
+GET {{ASP.Claims.API_HostAddress}}/api/claim
+Accept: application/json
+
+### Get claims by type
+
+######################### PROPERTY CLAIMS ENDPOINTS ###########################
+
+GET {{ASP.Claims.API_HostAddress}}/api/claim/type/Property
+
+### Get all property claims
+GET {{ASP.Claims.API_HostAddress}}/api/propertyclaim
+
+### Get property claim by id
+GET {{ASP.Claims.API_HostAddress}}/api/propertyclaim/{{propertyClaimId}}
+
+### Create property claim
+POST {{ASP.Claims.API_HostAddress}}/api/propertyclaim
+Content-Type: application/json
+{
+  "address": "123 Main St",
+  "description": "Fire damage",
+  "estimatedDamageCost": 5000,
+  "PropertyDamageType": "Fire",
+}
+
+### Update property claim
+PUT {{ASP.Claims.API_HostAddress}}/api/propertyclaim/{{propertyClaimId}}
+Content-Type: application/json
+{
+  "id": "{{propertyClaimId}}",
+  "address": "123 Main St",
+  "description": "Updated description",
+  "estimatedDamageCost": 6000,
+  "propertyDamageType": "Water",
+}
+
+### Delete property claim
+DELETE {{ASP.Claims.API_HostAddress}}/api/propertyclaim/{{propertyClaimId}}
+
+###
+
+######################### VEHICLE CLAIMS ENDPOINTS ###########################
+
+GET {{ASP.Claims.API_HostAddress}}/api/claim/type/Vehicle
+
+### Get all vehicle claims
+GET {{ASP.Claims.API_HostAddress}}/api/vehicleclaim
+
+### Get vehicle claim by id
+GET {{ASP.Claims.API_HostAddress}}/api/vehicleclaim/{{propertyClaimId}}
+
+### Create vehicle claim
+POST {{ASP.Claims.API_HostAddress}}/api/vehicleclaim
+Content-Type: application/json
+{
+  "registrationNumber": "ABC123",
+  "placeOfAccident": "Main Street",
+  "reportedDate": "2024-06-01T00:00:00Z",
+  "description": "Rear-end collision",
+}
+
+### Update vehicle claim
+PUT {{ASP.Claims.API_HostAddress}}/api/vehicleclaim/{{propertyClaimId}}
+Content-Type: application/json
+{
+  "id": "{{propertyClaimId}}",
+  "registrationNumber": "ABC123",
+  "placeOfAccident": "Main Street",
+  "type": "Vehicle",
+  "reportedDate": "2024-06-02T00:00:00Z",
+  "description": "Updated: rear-end collision, more damage found",
+}
+
+### Delete vehicle claim
+DELETE {{ASP.Claims.API_HostAddress}}/api/vehicleclaim/{{propertyClaimId}}
+
+###
+
+######################### TRAVEL CLAIMS ENDPOINTS ###########################
+
+GET {{ASP.Claims.API_HostAddress}}/api/claim/type/Travel
+
+### Get all property claims
+GET {{ASP.Claims.API_HostAddress}}/api/travelclaim
+
+### Get property claim by id
+GET {{ASP.Claims.API_HostAddress}}/api/travelclaim/{{propertyClaimId}}
+
+### Create property claim
+POST {{ASP.Claims.API_HostAddress}}/api/travelclaim
+Content-Type: application/json
+{
+  "country": "Spain",
+  "startDate": "2024-06-10T00:00:00Z",
+  "endDate": "2024-06-15T00:00:00Z",
+  "incidentType": "Other",
+  "reportedDate": "2024-06-10T00:00:00Z",
+  "description": "Lost luggage at airport",
+}
+
+### Update property claim
+PUT {{ASP.Claims.API_HostAddress}}/api/travelclaim/{{propertyClaimId}}
+Content-Type: application/json
+{
+  "id": "{{propertyClaimId}}",
+  "country": "Spain",
+  "startDate": "2024-06-10T00:00:00Z",
+  "endDate": "2024-06-16T00:00:00Z",
+  "incidentType": "Other",
+  "reportedDate": "2024-06-10T00:00:00Z",
+  "description": "Updated: lost luggage, compensation requested",
+}
+
+### Delete property claim
+DELETE {{ASP.Claims.API_HostAddress}}/api/travelclaim/{{propertyClaimId}}
+
+###
+
+###
