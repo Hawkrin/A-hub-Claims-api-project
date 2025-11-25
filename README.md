@@ -42,15 +42,15 @@ ASP.Claims.API/
 
 Projektet är organiserat enligt följande lager och mappar:
 
-•	API
+•	API  
 Controllers, DTOs, validerare och resurser för presentation och kommunikation med klienter.
-•	Application
+•	Application  
 CQRS (kommandon, queries, handlers), tjänste- och repositorygränssnitt, affärslogik och eventuella AutoMapper-profiler.
-•	Domain
+•	Domain  
 Domänmodeller, enum-typer och annan domänspecifik logik.
-•	Infrastructures
+•	Infrastructures  
 Implementering av datalager och andra tekniska beroenden.
-•	Middleware
+•	Middleware  
 Globala filter och felhantering.
 
 ### Flöde
