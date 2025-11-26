@@ -1,5 +1,26 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+﻿# Build results
+bin/
+obj/
 
-/ASP.Claims.API/.gitignore
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Rider
+.idea/
+
+# Visual Studio
+.vs/
+
+# Other
+*.db
+*.db-shm
+*.db-wal
+*.vsix
+*.ncrunch*
+*.cr/
