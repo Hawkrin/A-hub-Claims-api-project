@@ -8,9 +8,9 @@ public record TravelClaimDto
 
     public Country Country { get; set; }
 
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
+    public DateTime StartDate { get; set; }
 
-    public DateTime EndDate { get; set; } = DateTime.UtcNow;
+    public DateTime EndDate { get; set; }
 
     public IncidentType IncidentType { get; set; }
 

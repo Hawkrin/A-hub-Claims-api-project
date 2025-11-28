@@ -16,6 +16,7 @@ public class TravelClaimDtoValidator : AbstractValidator<TravelClaimDto>
             .IsInEnum();
 
         RuleFor(x => x.Country)
+          .NotEmpty()
           .IsInEnum()
           .WithMessage(ErrorMessages.ErrorMessage_CountryMissing_SE);
 
@@ -24,14 +25,17 @@ public class TravelClaimDtoValidator : AbstractValidator<TravelClaimDto>
             .WithMessage(ErrorMessages.ErrorMessage_StartDateMissing_SE);
 
         RuleFor(x => x.EndDate)
+            .NotEmpty()
             .GreaterThanOrEqualTo(x => x.StartDate)
             .WithMessage(ErrorMessages.ErrorMessage_EndDateBeforeStartDate_SE);
 
         RuleFor(x => x.ReportedDate)
+            .NotEmpty()
             .Must((claim, reportedDate) => reportedDate <= claim.EndDate.AddDays(14))
             .WithMessage(ErrorMessages.ErrorMessage_ReportedTooLate_SE);
 
         RuleFor(x => x.IncidentType)
+             .NotEmpty()
             .IsInEnum()
             .WithMessage(ErrorMessages.ErrorMessage_TypeOfIncidentMissing_SE);
     }

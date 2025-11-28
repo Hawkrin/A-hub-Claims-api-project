@@ -2,6 +2,7 @@ using Asp.Versioning;
 using ASP.Claims.API.API.Validators;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
+using ASP.Claims.API.Application.Profiles;
 using ASP.Claims.API.Application.Services;
 using ASP.Claims.API.Infrastructures.Repositories;
 using ASP.Claims.API.Middleware;
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyClaimDtoValidator>();
@@ -39,6 +41,12 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
 builder.Services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
 
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddProfile<PropertyClaimMappingProfile>();
+    cfg.AddProfile<TravelClaimMappingProfile>();
+    cfg.AddProfile<VehicleClaimMappingProfile>();
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -54,3 +62,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+public partial class Program { }

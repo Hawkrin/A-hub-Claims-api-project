@@ -3,6 +3,7 @@ using ASP.Claims.API.API.DTOs;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.CQRS.Claims.Queries;
 using ASP.Claims.API.Resources;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +12,10 @@ namespace ASP.Claims.API.API.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/[controller]")]
-public class VehicleClaimController(IMediator mediator) : ControllerBase
+public class VehicleClaimController(IMediator mediator, IMapper mapper) : ControllerBase
 {
     private readonly IMediator _mediator = mediator;
+    private readonly IMapper _mapper = mapper;
 
     /// <summary>
     /// Gets a vehicle claim by its unique identifier.
@@ -46,12 +48,7 @@ public class VehicleClaimController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] VehicleClaimDto dto)
     {
-        var command = new CreateVehicleClaimCommand(
-            dto.RegistrationNumber,
-            dto.PlaceOfAccident,
-            dto.ReportedDate,
-            dto.Description
-        );
+        var command = _mapper.Map<CreateVehicleClaimCommand>(dto);
 
         var res = await _mediator.Send(command);
         var id = res.ValueOrDefault;
@@ -71,14 +68,7 @@ public class VehicleClaimController(IMediator mediator) : ControllerBase
         if (id != dto.Id)
             return BadRequest(new { message = ErrorMessages.ErrorMessage_RouteIdAndDTOIdDoNotMatch });
 
-        var command = new UpdateVehicleClaimCommand(
-            dto.Id,
-            dto.RegistrationNumber,
-            dto.PlaceOfAccident,
-            dto.ReportedDate,
-            dto.Description,
-            dto.Status
-        );
+        var command = _mapper.Map<UpdateVehicleClaimCommand>(dto);
 
         var result = await _mediator.Send(command);
 

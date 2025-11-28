@@ -3,27 +3,18 @@ namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
-using ASP.Claims.API.Domain.Enums;
+using AutoMapper;
 using FluentResults;
 using MediatR;
 
-public class CreateTravelClaimHandler(IClaimRepository repository) : IRequestHandler<CreateTravelClaimCommand, Result<Guid>>
+public class CreateTravelClaimHandler(IClaimRepository repository, IMapper mapper) : IRequestHandler<CreateTravelClaimCommand, Result<Guid>>
 {
     private readonly IClaimRepository _repository = repository;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<Result<Guid>> Handle(CreateTravelClaimCommand command, CancellationToken cancellationToken)
     {
-        var claim = new TravelClaim
-        {
-            Id = Guid.NewGuid(),
-            Country = command.Country,
-            StartDate = command.StartDate,
-            EndDate = command.EndDate,
-            IncidentType = command.IncidentType,
-            Description = command.Description,
-            ReportedDate = command.ReportedDate,
-            Status = ClaimStatus.None,
-        };
+        var claim = _mapper.Map<TravelClaim>(command);
 
         var saveResult = await _repository.Save(claim);
         if (saveResult.IsFailed)

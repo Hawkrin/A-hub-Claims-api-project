@@ -3,6 +3,7 @@ using ASP.Claims.API.API.DTOs;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.CQRS.Claims.Queries;
 using ASP.Claims.API.Resources;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +12,10 @@ namespace ASP.Claims.API.API.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/[controller]")]
-public class TravelClaimController(IMediator mediator) : ControllerBase
+public class TravelClaimController(IMediator mediator, IMapper mapper) : ControllerBase
 {
     private readonly IMediator _mediator = mediator;
+    private readonly IMapper _mapper = mapper;
 
     /// <summary>
     /// Gets a travel claim by its unique identifier.
@@ -46,18 +48,11 @@ public class TravelClaimController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] TravelClaimDto dto)
     {
-        var command = new CreateTravelClaimCommand(
-            dto.Country,
-            dto.StartDate,
-            dto.EndDate,
-            dto.IncidentType,
-            dto.ReportedDate,
-            dto.Description
-        );
+        var command = _mapper.Map<CreateTravelClaimCommand>(dto);
 
         var res = await _mediator.Send(command);
-        var id = res.ValueOrDefault;
 
+        var id = res.ValueOrDefault;
         return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
@@ -73,16 +68,7 @@ public class TravelClaimController(IMediator mediator) : ControllerBase
         if (id != dto.Id)
             return BadRequest(new { message = ErrorMessages.ErrorMessage_RouteIdAndDTOIdDoNotMatch });
 
-        var command = new UpdateTravelClaimCommand(
-            dto.Id,
-            dto.Country,
-            dto.StartDate,
-            dto.EndDate,
-            dto.IncidentType,
-            dto.ReportedDate,
-            dto.Description,
-            dto.Status
-        );
+        var command = _mapper.Map<UpdateTravelClaimCommand>(dto);
 
         var result = await _mediator.Send(command);
 

@@ -4,26 +4,20 @@ using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
 using ASP.Claims.API.Domain.Enums;
+using AutoMapper;
 using FluentResults;
 using MediatR;
 
-public class CreateVehicleClaimHandler(IClaimRepository repository, IClaimStatusEvaluator claimStatusEvaluator) : 
+public class CreateVehicleClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) : 
     IRequestHandler<CreateVehicleClaimCommand, Result<Guid>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<Result<Guid>> Handle(CreateVehicleClaimCommand command, CancellationToken cancellationToken)
     {
-        var claim = new VehicleClaim
-        {
-            Id = Guid.NewGuid(),
-            RegistrationNumber = command.RegistrationNumber,
-            PlaceOfAccident = command.PlaceOfAccident,
-            Description = command.Description,
-            ReportedDate = command.ReportedDate,
-            Status = ClaimStatus.None,
-        };
+        var claim = _mapper.Map<VehicleClaim>(command);
 
         claim.Status = _claimStatusEvaluator.Evaluate(claim, null);
 

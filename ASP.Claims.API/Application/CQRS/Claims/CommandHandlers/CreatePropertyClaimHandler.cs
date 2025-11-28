@@ -3,27 +3,20 @@
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
-using ASP.Claims.API.Domain.Enums;
+using AutoMapper;
 using FluentResults;
 using MediatR;
 
-public class CreatePropertyClaimHandler(IClaimRepository repository, IClaimStatusEvaluator claimStatusEvaluator) : 
+public class CreatePropertyClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) : 
     IRequestHandler<CreatePropertyClaimCommand, Result<Guid>>
 {
     private readonly IClaimRepository _repository = repository;
+    private readonly IMapper _mapper = mapper;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
 
     public async Task<Result<Guid>> Handle(CreatePropertyClaimCommand command, CancellationToken cancellationToken)
     {
-        var claim = new PropertyClaim
-        {
-            Id = Guid.NewGuid(),
-            Address = command.Address,
-            EstimatedDamageCost = command.EstimatedDamageCost,
-            ReportedDate = command.ReportedDate,
-            Description = command.Description,
-            Status = ClaimStatus.None,
-        };
+        var claim = _mapper.Map<PropertyClaim>(command);
 
         var allClaims = await _repository.GetByType(claim.Type);
         claim.Status = _claimStatusEvaluator.Evaluate(claim, allClaims);
