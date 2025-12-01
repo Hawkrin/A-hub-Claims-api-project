@@ -16,7 +16,7 @@ var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddJwtAuthentication(secret.Value, jwtOptions!);
 
-// DI regitrations
+// DI registrations
 builder.Services.AddApplicationServices(secret.Value);
 
 builder.Services.AddEndpointsApiExplorer();
