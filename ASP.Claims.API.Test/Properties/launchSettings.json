@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "ASP.Claims.API.Test": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "TEST"
+      },
+      "hotReloadEnabled": false
+    }
+  },
+  "environmentVariables": {
+    "ASPNETCORE_ENVIRONMENT": "Test"
+  }
+}

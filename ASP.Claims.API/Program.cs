@@ -7,11 +7,14 @@ using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .AddJsonFile($"appsettings.Test.json", optional: true, reloadOnChange: true);
+
 string jwtKey;
-if (builder.Environment.IsEnvironment("Test") || builder.Environment.IsDevelopment())
+if (builder.Environment.IsEnvironment("Test"))
 {
     // Use a test key for CI/test/dev
-    jwtKey = builder.Configuration["Jwt:TestKey"]!;
+    jwtKey = builder.Configuration["TestJwt:TestKey"]!;
 }
 else
 {
@@ -30,7 +33,7 @@ builder.Services.AddJwtAuthentication(jwtKey, jwtOptions!);
 builder.Services.AddApplicationServices(jwtKey);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(); 
 builder.Services.AddOpenApi();
 
 builder.Services.AddApiVersioning(options =>

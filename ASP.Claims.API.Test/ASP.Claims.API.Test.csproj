@@ -34,5 +34,12 @@
   <ItemGroup>
     <ProjectReference Include="..\ASP.Claims.API\ASP.Claims.API.csproj" />
   </ItemGroup>
+	
+<ItemGroup>
+  <None Include="appsettings.Test.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </None>
+</ItemGroup>
 
 </Project>
