@@ -15,7 +15,7 @@ namespace ASP.Claims.API.Test.Setup;
 /// <param name="options">The monitor used to retrieve authentication scheme options for the handler.</param>
 /// <param name="logger">The factory used to create logger instances for logging within the handler.</param>
 /// <param name="encoder">The encoder used to encode URLs as part of the authentication process.</param>
-public class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : 
+public class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) :
     AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string TestScheme = "TestScheme";

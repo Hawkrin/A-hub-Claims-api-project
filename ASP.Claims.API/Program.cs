@@ -7,17 +7,27 @@ using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>();
-var client = new SecretClient(new Uri(keyVaultSettings!.Url), new DefaultAzureCredential());
-KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.JwtSecretName);
+string jwtKey;
+if (builder.Environment.IsEnvironment("Test") || builder.Environment.IsDevelopment())
+{
+    // Use a test key for CI/test/dev
+    jwtKey = builder.Configuration["Jwt:TestKey"]!;
+}
+else
+{
+    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>();
+    var client = new SecretClient(new Uri(keyVaultSettings!.Url), new DefaultAzureCredential());
+    KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.JwtSecretName);
+    jwtKey = secret.Value;
+}
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-builder.Services.AddJwtAuthentication(secret.Value, jwtOptions!);
+builder.Services.AddJwtAuthentication(jwtKey, jwtOptions!);
 
 // DI registrations
-builder.Services.AddApplicationServices(secret.Value);
+builder.Services.AddApplicationServices(jwtKey);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
