@@ -1,15 +1,14 @@
-﻿using ASP.Claims.API.API.DTOs;
-using ASP.Claims.API.API.DTOs.Claims;
+﻿using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Domain.Enums;
+using ASP.Claims.API.Test.Setup;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 using Xunit;
 
 namespace ASP.Claims.API.Test.ControllerTests.ValidatorTests;
 
-public class PropertyClaimControllerValidationTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class PropertyClaimControllerValidationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 

@@ -1,6 +1,6 @@
-﻿using ASP.Claims.API.API.DTOs;
-using ASP.Claims.API.API.DTOs.Claims;
+﻿using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Domain.Enums;
+using ASP.Claims.API.Test.Setup;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
@@ -9,7 +9,7 @@ using Xunit;
 
 namespace ASP.Claims.API.Test.ControllerTests;
 
-public class TravelClaimControllerTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class TravelClaimControllerTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -110,4 +110,16 @@ public class TravelClaimControllerTests(WebApplicationFactory<Program> factory) 
         var response = await _client.DeleteAsync($"/api/TravelClaim/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task GetAll_ReturnsUnauthorized_IfNotAuthenticated()
+    {
+        // Create a client without the test auth handler
+        var factory = new WebApplicationFactory<Program>();
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/TravelClaim");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
 }
