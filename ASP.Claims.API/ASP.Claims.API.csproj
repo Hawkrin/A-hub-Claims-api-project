@@ -26,13 +26,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
   </ItemGroup>
 
-	<ItemGroup>
-	<None Include="..\ASP.Claims.API.Test\appsettings.Test.json">
-		<Link>appsettings.Test.json</Link>
-		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</None>
-	</ItemGroup>
-
   <ItemGroup>
     <Compile Update="Resources\Countries.Designer.cs">
       <DesignTime>True</DesignTime>
