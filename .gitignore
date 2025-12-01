@@ -29,4 +29,3 @@ obj/
 appsettings.json
 appsettings.*.json
 !appsettings.example.json
-appsettings.Test.json
