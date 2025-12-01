@@ -1,33 +1,27 @@
 using Asp.Versioning;
-using ASP.Claims.API.API.Validators;
-using ASP.Claims.API.Application.CQRS.Claims.Commands;
-using ASP.Claims.API.Application.Interfaces;
-using ASP.Claims.API.Application.Profiles;
-using ASP.Claims.API.Application.Services;
-using ASP.Claims.API.Infrastructures.Repositories;
+using ASP.Claims.API.Extensions;
 using ASP.Claims.API.Middleware;
-using ASP.Claims.API.Middleware.Filters;
-using FluentValidation;
-using System.Text.Json.Serialization;
+using ASP.Claims.API.Settings;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>();
+var client = new SecretClient(new Uri(keyVaultSettings!.Url), new DefaultAzureCredential());
+KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.JwtSecretName);
+
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddJwtAuthentication(secret.Value, jwtOptions!);
+
+// DI regitrations
+builder.Services.AddApplicationServices(secret.Value);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
-
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-builder.Services.AddValidatorsFromAssemblyContaining<PropertyClaimDtoValidator>();
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreatePropertyClaimCommand>());
-
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<FluentValidationActionFilter>();
-})
-.AddJsonOptions(jsonOptions =>
-{
-    jsonOptions.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -35,16 +29,6 @@ builder.Services.AddApiVersioning(options =>
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true; // Adds API version headers to responses
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
-
-});
-
-builder.Services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
-builder.Services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
-
-builder.Services.AddAutoMapper(cfg => {
-    cfg.AddProfile<PropertyClaimMappingProfile>();
-    cfg.AddProfile<TravelClaimMappingProfile>();
-    cfg.AddProfile<VehicleClaimMappingProfile>();
 });
 
 var app = builder.Build();
@@ -57,10 +41,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
 
+// Keep for tests
 public partial class Program { }

@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using ASP.Claims.API.API.DTOs;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Domain.Entities;
+using ASP.Claims.API.API.DTOs.Claims;
 
 namespace ASP.Claims.API.Application.Profiles;
 

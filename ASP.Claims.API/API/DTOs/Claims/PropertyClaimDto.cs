@@ -1,18 +1,16 @@
 ﻿using ASP.Claims.API.Domain.Enums;
 
-namespace ASP.Claims.API.API.DTOs;
+namespace ASP.Claims.API.API.DTOs.Claims;
 
-public record TravelClaimDto
+public record PropertyClaimDto
 {
     public Guid Id { get; set; }
 
-    public Country Country { get; set; }
+    public string Address { get; set; } = string.Empty;
 
-    public DateTime StartDate { get; set; }
+    public PropertyDamageType PropertyDamageType { get; set; }
 
-    public DateTime EndDate { get; set; }
-
-    public IncidentType IncidentType { get; set; }
+    public decimal EstimatedDamageCost { get; set; }
 
     public DateTime ReportedDate { get; set; } = DateTime.UtcNow;
 
@@ -20,4 +18,3 @@ public record TravelClaimDto
 
     public ClaimStatus Status { get; set; } = ClaimStatus.None;
 }
-

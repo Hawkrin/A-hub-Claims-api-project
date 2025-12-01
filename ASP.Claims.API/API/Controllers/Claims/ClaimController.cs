@@ -2,9 +2,10 @@ using Asp.Versioning;
 using ASP.Claims.API.Application.CQRS.Claims.Queries;
 using ASP.Claims.API.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ASP.Claims.API.API.Controllers;
+namespace ASP.Claims.API.API.Controllers.Claims;
 
 [ApiController]
 [ApiVersion("1.0")]
@@ -17,6 +18,7 @@ public class ClaimController(IMediator mediator) : ControllerBase
     /// Gets all claims.
     /// </summary>
     /// <returns>List of all claims.</returns>
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Claim>>> GetAll()
     {

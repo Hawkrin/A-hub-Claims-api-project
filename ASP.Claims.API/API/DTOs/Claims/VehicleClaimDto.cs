@@ -1,16 +1,14 @@
 ﻿using ASP.Claims.API.Domain.Enums;
 
-namespace ASP.Claims.API.API.DTOs;
+namespace ASP.Claims.API.API.DTOs.Claims;
 
-public record PropertyClaimDto
+public record VehicleClaimDto
 {
     public Guid Id { get; set; }
 
-    public string Address { get; set; } = string.Empty;
+    public string RegistrationNumber { get; set; } = string.Empty;
 
-    public PropertyDamageType PropertyDamageType { get; set; }
-
-    public decimal EstimatedDamageCost { get; set; }
+    public string PlaceOfAccident { get; set; } = string.Empty;
 
     public DateTime ReportedDate { get; set; } = DateTime.UtcNow;
 

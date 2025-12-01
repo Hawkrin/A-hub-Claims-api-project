@@ -1,54 +1,58 @@
-﻿using Asp.Versioning;
-using ASP.Claims.API.API.DTOs;
+using Asp.Versioning;
+using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.CQRS.Claims.Queries;
 using ASP.Claims.API.Resources;
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ASP.Claims.API.API.Controllers;
+namespace ASP.Claims.API.API.Controllers.Claims;
 
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/[controller]")]
-public class PropertyClaimController(IMediator mediator, IMapper mapper) : ControllerBase
+public class TravelClaimController(IMediator mediator, IMapper mapper) : ControllerBase
 {
     private readonly IMediator _mediator = mediator;
     private readonly IMapper _mapper = mapper;
 
     /// <summary>
-    /// Gets a property claim by its unique identifier.
+    /// Gets a travel claim by its unique identifier.
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
-    /// <returns>The property claim if found; otherwise, 404 Not Found.</returns>
+    /// <returns>The travel claim if found; otherwise, 404 Not Found.</returns>
+    [Authorize]
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PropertyClaimDto>> GetById(Guid id)
+    public async Task<ActionResult<TravelClaimDto>> GetById(Guid id)
     {
-        var claim = await _mediator.Send(new GetPropertyClaimByIdQuery(id));
+        var claim = await _mediator.Send(new GetTravelClaimByIdQuery(id));
         return claim is not null ? Ok(claim) : NotFound();
     }
 
     /// <summary>
-    /// Gets all property claims.
+    /// Gets all travel claims.
     /// </summary>
-    /// <returns>List of property claims.</returns>
+    /// <returns>List of travel claims.</returns>
+    [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<PropertyClaimDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<TravelClaimDto>>> GetAll()
     {
-        var claims = await _mediator.Send(new GetAllPropertyClaimsQuery());
+        var claims = await _mediator.Send(new GetAllTravelClaimsQuery());
         return Ok(claims);
     }
 
     /// <summary>
-    /// Creates a new property claim.
+    /// Creates a new travel claim.
     /// </summary>
-    /// <param name="dto">The property claim data.</param>
+    /// <param name="dto">The travel claim data.</param>
     /// <returns>The created claim's ID.</returns>
+    [Authorize]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] PropertyClaimDto dto)
+    public async Task<IActionResult> Create([FromBody] TravelClaimDto dto)
     {
-        var command = _mapper.Map<CreatePropertyClaimCommand>(dto);
+        var command = _mapper.Map<CreateTravelClaimCommand>(dto);
 
         var res = await _mediator.Send(command);
 
@@ -57,18 +61,20 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
     }
 
     /// <summary>
-    /// Updates an existing property claim.
+    /// Updates an existing travel claim.
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
-    /// <param name="dto">The updated property claim data.</param>
+    /// <param name="dto">The updated travel claim data.</param>
     /// <returns>No content if successful; 400 Bad Request if IDs do not match; 404 Not Found if claim does not exist.</returns>
+    [Authorize]
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] PropertyClaimDto dto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] TravelClaimDto dto)
     {
         if (id != dto.Id)
             return BadRequest(new { message = ErrorMessages.ErrorMessage_RouteIdAndDTOIdDoNotMatch });
 
-        var command = _mapper.Map<UpdatePropertyClaimCommand>(dto);
+        var command = _mapper.Map<UpdateTravelClaimCommand>(dto);
+
         var result = await _mediator.Send(command);
 
         if (result.IsSuccess)
@@ -80,15 +86,17 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
         return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
     }
 
+
     /// <summary>
-    /// Deletes a property claim by its unique identifier.
+    /// Deletes a travel claim by its unique identifier.
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
     /// <returns>No content if successful; 404 Not Found if claim does not exist.</returns>
+    [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var result = await _mediator.Send(new DeletePropertyClaimCommand(id));
+        var result = await _mediator.Send(new DeleteTravelClaimCommand(id));
 
         if (result.IsSuccess)
             return NoContent();

@@ -1,4 +1,5 @@
 ﻿using ASP.Claims.API.API.DTOs;
+using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Domain.Enums;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;

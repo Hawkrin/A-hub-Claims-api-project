@@ -24,3 +24,8 @@ obj/
 *.vsix
 *.ncrunch*
 *.cr/
+
+
+appsettings.json
+appsettings.*.json
+!appsettings.example.json

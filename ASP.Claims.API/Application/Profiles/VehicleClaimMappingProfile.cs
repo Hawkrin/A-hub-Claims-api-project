@@ -1,4 +1,4 @@
-﻿using ASP.Claims.API.API.DTOs;
+﻿using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Domain.Entities;
 using AutoMapper;

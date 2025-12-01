@@ -1,13 +1,14 @@
 using Asp.Versioning;
-using ASP.Claims.API.API.DTOs;
+using ASP.Claims.API.API.DTOs.Claims;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.CQRS.Claims.Queries;
 using ASP.Claims.API.Resources;
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ASP.Claims.API.API.Controllers;
+namespace ASP.Claims.API.API.Controllers.Claims;
 
 [ApiController]
 [ApiVersion("1.0")]
@@ -22,6 +23,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
     /// <returns>The vehicle claim if found; otherwise, 404 Not Found.</returns>
+    [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<VehicleClaimDto>> GetById(Guid id)
     {
@@ -33,6 +35,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// Gets all vehicle claims.
     /// </summary>
     /// <returns>List of vehicle claims.</returns>
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleClaimDto>>> GetAll()
     {
@@ -45,6 +48,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// </summary>
     /// <param name="dto">The vehicle claim data.</param>
     /// <returns>The created claim's ID.</returns>
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] VehicleClaimDto dto)
     {
@@ -62,6 +66,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// <param name="id">The claim's unique identifier.</param>
     /// <param name="dto">The updated vehicle claim data.</param>
     /// <returns>No content if successful; 400 Bad Request if IDs do not match; 404 Not Found if claim does not exist.</returns>
+    [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] VehicleClaimDto dto)
     {
@@ -86,6 +91,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
     /// <returns>No content if successful; 404 Not Found if claim does not exist.</returns>
+    [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
