@@ -44,6 +44,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Set ASPNETCORE_ENVIRONMENT
+        run: echo "ASPNETCORE_ENVIRONMENT=Test" >> $GITHUB_ENV
+
       - name: Set up dependency caching for faster builds
         uses: actions/cache@v3
         with:

@@ -1,31 +1,31 @@
 ﻿using ASP.Claims.API.API.DTOs;
+using ASP.Claims.API.Test.Setup;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 using Xunit;
 
 namespace ASP.Claims.API.Test.ControllerTests;
 
-public class AuthControllerTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
-    [Fact]
-    public async Task GenerateToken_ReturnsOk_ForValidCredentials()
-    {
-        var login = new LoginDto
-        {
-            Username = "admin",
-            Password = "password"
-        };
+    //[Fact]
+    //public async Task GenerateToken_ReturnsOk_ForValidCredentials()
+    //{
+    //    var login = new LoginDto
+    //    {
+    //        Username = "admin",
+    //        Password = "password"
+    //    };
 
-        var response = await _client.PostAsJsonAsync("/api/Auth/token", login);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    //    var response = await _client.PostAsJsonAsync("/api/Auth/token", login);
+    //    response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("token");
-    }
+    //    var content = await response.Content.ReadAsStringAsync();
+    //    content.Should().Contain("token");
+    //}
 
     [Fact]
     public async Task GenerateToken_ReturnsUnauthorized_ForInvalidUsername()

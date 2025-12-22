@@ -113,7 +113,6 @@ public class PropertyClaimControllerTests(CustomWebApplicationFactory factory) :
     [Fact]
     public async Task GetAll_ReturnsUnauthorized_IfNotAuthenticated()
     {
-        // Create a client without the test auth handler
         var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
 

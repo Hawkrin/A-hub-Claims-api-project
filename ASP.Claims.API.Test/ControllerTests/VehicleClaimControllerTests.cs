@@ -2,6 +2,7 @@
 using ASP.Claims.API.Domain.Enums;
 using ASP.Claims.API.Test.Setup;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
@@ -109,12 +110,10 @@ public class VehicleClaimControllerTests(CustomWebApplicationFactory factory) : 
     [Fact]
     public async Task GetAll_ReturnsUnauthorized_IfNotAuthenticated()
     {
-        // Create a client without the test auth handler
         var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/VehicleClaim");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
-
 }
