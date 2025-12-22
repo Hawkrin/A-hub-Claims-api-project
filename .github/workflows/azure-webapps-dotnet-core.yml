@@ -28,6 +28,9 @@ jobs:
       - name: Set ASPNETCORE_ENVIRONMENT
         run: echo "ASPNETCORE_ENVIRONMENT=Test" >> $GITHUB_ENV
 
+      - name: Set test JWT key
+        run: echo "TestJwt__TestKey=super-secret-test-key" >> $GITHUB_ENV
+
       - name: Cache NuGet packages
         uses: actions/cache@v3
         with:
