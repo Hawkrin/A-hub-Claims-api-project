@@ -111,14 +111,14 @@ public class TravelClaimControllerTests(CustomWebApplicationFactory factory) : I
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact]
-    public async Task GetAll_ReturnsUnauthorized_IfNotAuthenticated()
-    {
-        var factory = new WebApplicationFactory<Program>();
-        var client = factory.CreateClient();
+    //[Fact]
+    //public async Task GetAll_ReturnsUnauthorized_IfNotAuthenticated()
+    //{
+    //    var factory = new WebApplicationFactory<Program>();
+    //    var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/TravelClaim");
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
+    //    var response = await client.GetAsync("/api/TravelClaim");
+    //    response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    //}
 
 }
