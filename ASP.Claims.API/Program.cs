@@ -14,31 +14,43 @@ builder.Configuration
     .AddJsonFile("appsettings.Test.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-
 string jwtKey;
 if (builder.Environment.IsEnvironment("Test"))
 {
     // Use a test key for CI/test/dev
-    jwtKey = builder.Configuration["TestJwt:TestKey"]!;
+    jwtKey = builder.Configuration["TestJwt:TestKey"]
+             ?? throw new InvalidOperationException("TestJwt:TestKey is missing in configuration.");
 }
 else
 {
-    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>();
-    var client = new SecretClient(new Uri(keyVaultSettings!.Url), new DefaultAzureCredential());
+    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>()
+        ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
+
+    if (string.IsNullOrWhiteSpace(keyVaultSettings.Url) ||
+        string.IsNullOrWhiteSpace(keyVaultSettings.JwtSecretName))
+    {
+        throw new InvalidOperationException("KeyVault:Url or KeyVault:JwtSecretName is missing or empty.");
+    }
+
+    var client = new SecretClient(new Uri(keyVaultSettings.Url), new DefaultAzureCredential());
     KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.JwtSecretName);
-    jwtKey = secret.Value;
+
+    jwtKey = secret.Value
+             ?? throw new InvalidOperationException("Key Vault returned a null JWT secret value.");
 }
 
-var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+// Ensure Jwt section (Issuer/Audience) exists
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Jwt section is missing (Jwt:Issuer, Jwt:Audience).");
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-builder.Services.AddJwtAuthentication(jwtKey, jwtOptions!);
+builder.Services.AddJwtAuthentication(jwtKey, jwtOptions);
 
 // DI registrations
 builder.Services.AddApplicationServices(jwtKey);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(); 
+builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 
 builder.Services.AddApiVersioning(options =>
