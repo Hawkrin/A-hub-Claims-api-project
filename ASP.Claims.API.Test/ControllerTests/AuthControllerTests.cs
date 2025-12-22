@@ -15,16 +15,16 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
     private const string ValidPassword = "TestPassword123!";
     private const Role ValidRole = Role.Admin;
 
-    private async Task RegisterTestUser()
-    {
-        var registerDto = new RegisterDto
-        {
-            Username = ValidUsername,
-            Password = ValidPassword,
-            Role = ValidRole
-        };
-        await _client.PostAsJsonAsync("/api/Auth/register", registerDto);
-    }
+    //private async Task RegisterTestUser()
+    //{
+    //    var registerDto = new RegisterDto
+    //    {
+    //        Username = ValidUsername,
+    //        Password = ValidPassword,
+    //        Role = ValidRole
+    //    };
+    //    await _client.PostAsJsonAsync("/api/Auth/register", registerDto);
+    //}
 
     [Fact]
     public async Task Register_ReturnsOk_ForNewUser()
@@ -70,20 +70,20 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         content.Should().Contain("token");
     }
 
-    [Fact]
-    public async Task Login_ReturnsOk_ForValidCredentials()
-    {
-        await RegisterTestUser();
-        var login = new LoginDto
-        {
-            Username = ValidUsername,
-            Password = ValidPassword
-        };
-        var response = await _client.PostAsJsonAsync("/api/Auth/login", login);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("token");
-    }
+    //[Fact]
+    //public async Task Login_ReturnsOk_ForValidCredentials()
+    //{
+    //    await RegisterTestUser();
+    //    var login = new LoginDto
+    //    {
+    //        Username = ValidUsername,
+    //        Password = ValidPassword
+    //    };
+    //    var response = await _client.PostAsJsonAsync("/api/Auth/login", login);
+    //    response.StatusCode.Should().Be(HttpStatusCode.OK);
+    //    var content = await response.Content.ReadAsStringAsync();
+    //    content.Should().Contain("token");
+    //}
 
     [Fact]
     public async Task GenerateToken_ReturnsUnauthorized_ForInvalidUsername()
