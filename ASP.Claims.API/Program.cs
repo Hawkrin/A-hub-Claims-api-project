@@ -14,13 +14,13 @@ builder.Configuration
     .AddJsonFile("appsettings.Test.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+bool isTestEnvironment = builder.Environment.IsEnvironment("Test");
+
 string jwtKey;
-if (builder.Environment.IsEnvironment("Test"))
+if (isTestEnvironment)
 {
     // Use a test key for CI/test/dev
-    jwtKey = builder.Configuration["TestJwt:TestKey"]
-             ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")
-             ?? throw new InvalidOperationException("TestJwt:TestKey is missing in configuration.");
+    jwtKey = builder.Configuration["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")!;
 }
 else
 {
@@ -40,6 +40,31 @@ else
              ?? throw new InvalidOperationException("Key Vault returned a null JWT secret value.");
 }
 
+string cosmosDbKey;
+
+if (isTestEnvironment)
+{
+    // For tests, use a long dummy value so CosmosClient does not throw
+    cosmosDbKey = builder.Configuration["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")!;
+}
+else
+{
+    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>()
+        ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
+
+    if (string.IsNullOrWhiteSpace(keyVaultSettings.Url) ||
+        string.IsNullOrWhiteSpace(keyVaultSettings.CosmosDbPrimaryKeySecretName))
+    {
+        throw new InvalidOperationException("KeyVault:Url or KeyVault:CosmosDbPrimaryKeySecretName is missing or empty.");
+    }
+
+    var secretClient = new SecretClient(new Uri(keyVaultSettings.Url), new DefaultAzureCredential());
+    KeyVaultSecret cosmosSecret = await secretClient.GetSecretAsync(keyVaultSettings.CosmosDbPrimaryKeySecretName);
+
+    cosmosDbKey = cosmosSecret.Value
+        ?? throw new InvalidOperationException("Key Vault returned a null Cosmos DB secret value.");
+}
+
 // Ensure Jwt section (Issuer/Audience) exists
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException("Jwt section is missing (Jwt:Issuer, Jwt:Audience).");
@@ -48,7 +73,7 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddJwtAuthentication(jwtKey, jwtOptions);
 
 // DI registrations
-builder.Services.AddApplicationServices(jwtKey);
+builder.Services.AddApplicationServices(jwtKey, cosmosDbKey, isTestEnvironment);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
