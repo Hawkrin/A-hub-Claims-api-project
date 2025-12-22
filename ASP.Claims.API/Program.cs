@@ -7,8 +7,13 @@ using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Base + environment-specific + test (for local/CI tests)
 builder.Configuration
-    .AddJsonFile($"appsettings.Test.json", optional: true, reloadOnChange: true);
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddJsonFile("appsettings.Test.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
 
 string jwtKey;
 if (builder.Environment.IsEnvironment("Test"))
