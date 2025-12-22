@@ -19,6 +19,7 @@ if (builder.Environment.IsEnvironment("Test"))
 {
     // Use a test key for CI/test/dev
     jwtKey = builder.Configuration["TestJwt:TestKey"]
+             ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")
              ?? throw new InvalidOperationException("TestJwt:TestKey is missing in configuration.");
 }
 else
