@@ -7,6 +7,9 @@ using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Base + environment-specific + test (for local/CI tests)
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -49,20 +52,8 @@ if (isTestEnvironment)
 }
 else
 {
-    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>()
-        ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
-
-    if (string.IsNullOrWhiteSpace(keyVaultSettings.Url) ||
-        string.IsNullOrWhiteSpace(keyVaultSettings.CosmosDbPrimaryKeySecretName))
-    {
-        throw new InvalidOperationException("KeyVault:Url or KeyVault:CosmosDbPrimaryKeySecretName is missing or empty.");
-    }
-
-    var secretClient = new SecretClient(new Uri(keyVaultSettings.Url), new DefaultAzureCredential());
-    KeyVaultSecret cosmosSecret = await secretClient.GetSecretAsync(keyVaultSettings.CosmosDbPrimaryKeySecretName);
-
-    cosmosDbKey = cosmosSecret.Value
-        ?? throw new InvalidOperationException("Key Vault returned a null Cosmos DB secret value.");
+    cosmosDbKey = builder.Configuration["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")
+        ?? throw new InvalidOperationException("CosmosDb:Key is missing in configuration.");
 }
 
 // Ensure Jwt section (Issuer/Audience) exists
