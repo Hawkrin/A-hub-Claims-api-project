@@ -46,6 +46,28 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
         return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
     }
 
+    //[HttpPost("register")]
+    //public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    //{
+    //    var existing = await _userRepo.GetByUsernameAsync(dto.Username);
+    //    if (existing != null)
+    //        return BadRequest("User already exists.");
+
+    //    var user = new User
+    //    {
+    //        Id = Guid.NewGuid().ToString(),
+    //        Username = dto.Username,
+    //        Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+    //        Role = dto.Role,
+    //    };
+
+    //    var result = await _userRepo.SaveAsync(user);
+    //    if (result.IsFailed)
+    //        return BadRequest(result.Errors[0].Message);
+
+    //    return Ok("User registered.");
+    //}
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
@@ -63,7 +85,11 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
 
         var result = await _userRepo.SaveAsync(user);
         if (result.IsFailed)
-            return BadRequest(result.Errors[0].Message);
+        {
+            // Log and throw to ensure AI captures the exception
+            var errorMsg = result.Errors[0].Message;
+            throw new Exception($"User registration failed: {errorMsg}");
+        }
 
         return Ok("User registered.");
     }
