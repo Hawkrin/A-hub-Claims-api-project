@@ -2,8 +2,6 @@ using Asp.Versioning;
 using ASP.Claims.API.Extensions;
 using ASP.Claims.API.Middleware;
 using ASP.Claims.API.Settings;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,44 +15,8 @@ builder.Configuration
     .AddJsonFile("appsettings.Test.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-bool isTestEnvironment = builder.Environment.IsEnvironment("Test");
-
-string jwtKey;
-if (isTestEnvironment)
-{
-    // Use a test key for CI/test/dev
-    jwtKey = builder.Configuration["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")!;
-}
-else
-{
-    var keyVaultSettings = builder.Configuration.GetSection("KeyVault").Get<KeyVaultSettings>()
-        ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
-
-    if (string.IsNullOrWhiteSpace(keyVaultSettings.Url) ||
-        string.IsNullOrWhiteSpace(keyVaultSettings.JwtSecretName))
-    {
-        throw new InvalidOperationException("KeyVault:Url or KeyVault:JwtSecretName is missing or empty.");
-    }
-
-    var client = new SecretClient(new Uri(keyVaultSettings.Url), new DefaultAzureCredential());
-    KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.JwtSecretName);
-
-    jwtKey = secret.Value
-             ?? throw new InvalidOperationException("Key Vault returned a null JWT secret value.");
-}
-
-string cosmosDbKey;
-
-if (isTestEnvironment)
-{
-    // For tests, use a long dummy value so CosmosClient does not throw
-    cosmosDbKey = builder.Configuration["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")!;
-}
-else
-{
-    cosmosDbKey = builder.Configuration["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")
-        ?? throw new InvalidOperationException("CosmosDb:Key is missing in configuration.");
-}
+var jwtKey = await KeyRetrievalService.GetJwtKeyAsync(builder.Configuration, builder.Environment);
+var cosmosDbKey = KeyRetrievalService.GetCosmosDbKey(builder.Configuration, builder.Environment);
 
 // Ensure Jwt section (Issuer/Audience) exists
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
@@ -64,7 +26,7 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddJwtAuthentication(jwtKey, jwtOptions);
 
 // DI registrations
-builder.Services.AddApplicationServices(jwtKey, cosmosDbKey, isTestEnvironment);
+builder.Services.AddApplicationServices(jwtKey, cosmosDbKey, builder.Environment.IsEnvironment("Test"));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
