@@ -92,7 +92,21 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
             if (claim.Id == Guid.Empty)
                 claim.Id = Guid.NewGuid();
 
-            await _container.CreateItemAsync(claim, new PartitionKey(claim.Id.ToString()));
+            switch (claim)
+            {
+                case PropertyClaim propertyClaim:
+                    await _container.CreateItemAsync(propertyClaim, new PartitionKey(propertyClaim.Id.ToString()));
+                    break;
+                case VehicleClaim vehicleClaim:
+                    await _container.CreateItemAsync(vehicleClaim, new PartitionKey(vehicleClaim.Id.ToString()));
+                    break;
+                case TravelClaim travelClaim:
+                    await _container.CreateItemAsync(travelClaim, new PartitionKey(travelClaim.Id.ToString()));
+                    break;
+                default:
+                    throw new Exception("Unknown claim type");
+            }
+
             return Result.Ok(claim);
         }
         catch (Exception ex)
