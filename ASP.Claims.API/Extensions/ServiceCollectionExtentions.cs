@@ -40,7 +40,8 @@ public static class ServiceCollectionExtensions
                 var cosmosClient = s.GetRequiredService<CosmosClient>();
                 var databaseName = config["CosmosDb:DatabaseName"];
                 var claimsContainerName = config["CosmosDb:Containers:Claims"];
-                return cosmosClient.GetContainer(databaseName, claimsContainerName);
+                var container = cosmosClient.GetContainer(databaseName, claimsContainerName);
+                return new CosmosDbClaimRepository(container);
             });
 
             // Register Users container
@@ -50,7 +51,8 @@ public static class ServiceCollectionExtensions
                 var cosmosClient = s.GetRequiredService<CosmosClient>();
                 var databaseName = config["CosmosDb:DatabaseName"];
                 var usersContainerName = config["CosmosDb:Containers:Users"];
-                return cosmosClient.GetContainer(databaseName, usersContainerName);
+                var container = cosmosClient.GetContainer(databaseName, usersContainerName);
+                return new CosmosDbUserRepository(container);
             });
 
             // Register repositories, injecting the correct container
