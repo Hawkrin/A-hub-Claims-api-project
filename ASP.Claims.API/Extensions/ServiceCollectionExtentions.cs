@@ -54,10 +54,6 @@ public static class ServiceCollectionExtensions
                 var container = cosmosClient.GetContainer(dbName, containerName);
                 return new CosmosDbUserRepository(container);
             });
-
-            // Register repositories, injecting the correct container
-            services.AddSingleton<IClaimRepository, CosmosDbClaimRepository>();
-            services.AddSingleton<IUserRepository, CosmosDbUserRepository>();
         }
 
         services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
