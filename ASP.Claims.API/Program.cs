@@ -16,7 +16,7 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var jwtKey = await KeyRetrievalService.GetJwtKeyAsync(builder.Configuration, builder.Environment);
-var cosmosDbKey = KeyRetrievalService.GetCosmosDbKey(builder.Configuration, builder.Environment);
+var cosmosDbKey = await KeyRetrievalService.GetCosmosDbKeyAsync(builder.Configuration, builder.Environment);
 
 // Ensure Jwt section (Issuer/Audience) exists
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()

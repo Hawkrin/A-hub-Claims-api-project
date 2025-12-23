@@ -20,12 +20,19 @@ public static class KeyRetrievalService
         return secret.Value ?? throw new InvalidOperationException("Key Vault returned a null JWT secret value.");
     }
 
-    public static string GetCosmosDbKey(IConfiguration config, IWebHostEnvironment env)
+    public static async Task<string> GetCosmosDbKeyAsync(IConfiguration config, IWebHostEnvironment env)
     {
         if (env.IsEnvironment("Test"))
             return config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")!;
 
-        return config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")
-            ?? throw new InvalidOperationException("CosmosDb:Key is missing in configuration.");
+        var keyVaultSettings = config.GetSection("KeyVault").Get<KeyVaultSettings>()
+            ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
+
+        if (string.IsNullOrWhiteSpace(keyVaultSettings.Url) || string.IsNullOrWhiteSpace(keyVaultSettings.CosmosDbPrimaryKeySecretName))
+            throw new InvalidOperationException("KeyVault:Url or KeyVault:CosmosDbPrimaryKeySecretName is missing or empty.");
+
+        var client = new SecretClient(new Uri(keyVaultSettings.Url), new DefaultAzureCredential());
+        KeyVaultSecret secret = await client.GetSecretAsync(keyVaultSettings.CosmosDbPrimaryKeySecretName);
+        return secret.Value ?? throw new InvalidOperationException("Key Vault returned a null Cosmos DB secret value.");
     }
 }
