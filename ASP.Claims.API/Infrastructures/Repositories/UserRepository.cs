@@ -9,14 +9,22 @@ public class CosmosDbUserRepository(Cosmos.Container container) : IUserRepositor
 {
     public async Task<User?> GetByUsernameAsync(string username)
     {
-        var query = container.GetItemQueryIterator<User>(
-            $"SELECT * FROM c WHERE c.Username = '{username}'");
-        while (query.HasMoreResults)
+        try
         {
-            var response = await query.ReadNextAsync();
-            return response.Resource.FirstOrDefault();
+            var query = container.GetItemQueryIterator<User>(
+                $"SELECT * FROM c WHERE c.Username = '{username}'");
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+                return response.Resource.FirstOrDefault();
+            }
+            return null;
         }
-        return null;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CosmosDbUserRepository.GetByUsernameAsync] {ex}");
+            throw;
+        }
     }
 
     public async Task<Result<User>> SaveAsync(User user)
@@ -27,9 +35,10 @@ public class CosmosDbUserRepository(Cosmos.Container container) : IUserRepositor
             await container.CreateItemAsync(user, new Cosmos.PartitionKey(user.Id));
             return Result.Ok(user);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Result.Fail<User>("Failed to create user.");
+            Console.WriteLine($"[CosmosDbUserRepository.SaveAsync] {ex}");
+            throw;
         }
     }
 }

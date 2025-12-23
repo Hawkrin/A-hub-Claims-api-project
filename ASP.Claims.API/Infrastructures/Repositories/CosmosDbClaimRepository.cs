@@ -65,9 +65,10 @@ public class CosmosDbClaimRepository : IClaimRepository
             await _container.CreateItemAsync(claim, new PartitionKey(claim.Id.ToString()));
             return Result.Ok(claim);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Result.Fail<Claim>(ErrorMessages.ErrorMessage_FailedToCreateClaim);
+            Console.WriteLine($"[CosmosDbClaimRepository.Save] {ex}");
+            throw;
         }
     }
 
