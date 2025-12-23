@@ -1,9 +1,11 @@
 ﻿using ASP.Claims.API.Domain.Enums;
+using Newtonsoft.Json;
 
 namespace ASP.Claims.API.Domain.Entities;
 
 public abstract class Claim
 {
+    [JsonProperty("id")]
     public Guid Id { get; set; }
 
     public ClaimType Type { get; set; }
