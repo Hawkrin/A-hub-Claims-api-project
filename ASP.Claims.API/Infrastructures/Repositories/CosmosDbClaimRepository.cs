@@ -83,9 +83,10 @@ public class CosmosDbClaimRepository : IClaimRepository
         {
             return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Result.Fail(ErrorMessages.ErrorMessage_FailedToCreateClaim);
+            Console.WriteLine($"[CosmosDbClaimRepository.UpdateClaim] {ex}");
+            throw;
         }
     }
 
@@ -100,9 +101,10 @@ public class CosmosDbClaimRepository : IClaimRepository
         {
             return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Result.Fail(ErrorMessages.ErrorMessage_FailedToCreateClaim);
+            Console.WriteLine($"[CosmosDbClaimRepository.DeleteClaim] {ex}");
+            throw;
         }
     }
 }
