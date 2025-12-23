@@ -1,6 +1,7 @@
 ﻿using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
 using FluentResults;
+using Microsoft.Azure.Cosmos.Linq;
 using Cosmos = Microsoft.Azure.Cosmos;
 
 namespace ASP.Claims.API.Infrastructures.Repositories;
@@ -9,11 +10,13 @@ public class CosmosDbUserRepository(Cosmos.Container container) : IUserRepositor
 {
     public async Task<User?> GetByUsernameAsync(string username)
     {
-        var query = container.GetItemQueryIterator<User>(
-            $"SELECT * FROM c WHERE c.Username = '{username}'");
-        while (query.HasMoreResults)
+        var iterator = container.GetItemLinqQueryable<User>()
+                                .Where(u => u.Username == username)
+                                .ToFeedIterator();
+
+        while (iterator.HasMoreResults)
         {
-            var response = await query.ReadNextAsync();
+            var response = await iterator.ReadNextAsync();
             return response.Resource.FirstOrDefault();
         }
         return null;
