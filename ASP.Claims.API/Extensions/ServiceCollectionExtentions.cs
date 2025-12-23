@@ -25,19 +25,38 @@ public static class ServiceCollectionExtensions
         }
         else
         {
+            // Register CosmosClient as singleton
             services.AddSingleton(s =>
             {
                 var config = s.GetRequiredService<IConfiguration>();
                 var account = config["CosmosDb:Account"];
-                var databaseName = config["CosmosDb:DatabaseName"];
-                var containerName = config["CosmosDb:ContainerName"];
-                var cosmosClient = new CosmosClient(account, cosmosDbKey);
-                return cosmosClient.GetContainer(databaseName, containerName);
+                return new CosmosClient(account, cosmosDbKey);
             });
+
+            // Register Claims container
+            services.AddSingleton(s =>
+            {
+                var config = s.GetRequiredService<IConfiguration>();
+                var cosmosClient = s.GetRequiredService<CosmosClient>();
+                var databaseName = config["CosmosDb:DatabaseName"];
+                var claimsContainerName = config["CosmosDb:Containers:Claims"];
+                return cosmosClient.GetContainer(databaseName, claimsContainerName);
+            });
+
+            // Register Users container
+            services.AddSingleton(s =>
+            {
+                var config = s.GetRequiredService<IConfiguration>();
+                var cosmosClient = s.GetRequiredService<CosmosClient>();
+                var databaseName = config["CosmosDb:DatabaseName"];
+                var usersContainerName = config["CosmosDb:Containers:Users"];
+                return cosmosClient.GetContainer(databaseName, usersContainerName);
+            });
+
+            // Register repositories, injecting the correct container
             services.AddSingleton<IClaimRepository, CosmosDbClaimRepository>();
             services.AddSingleton<IUserRepository, CosmosDbUserRepository>();
         }
-
 
         services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
 
