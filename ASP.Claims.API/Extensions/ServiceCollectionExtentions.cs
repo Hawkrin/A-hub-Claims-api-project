@@ -34,24 +34,24 @@ public static class ServiceCollectionExtensions
             });
 
             // Register Claims container
-            services.AddSingleton(s =>
+            services.AddSingleton<IClaimRepository>(s =>
             {
                 var config = s.GetRequiredService<IConfiguration>();
                 var cosmosClient = s.GetRequiredService<CosmosClient>();
-                var databaseName = config["CosmosDb:DatabaseName"];
-                var claimsContainerName = config["CosmosDb:Containers:Claims"];
-                var container = cosmosClient.GetContainer(databaseName, claimsContainerName);
+                var dbName = config["CosmosDb:DatabaseName"];
+                var containerName = config["CosmosDb:Containers:Claims"];
+                var container = cosmosClient.GetContainer(dbName, containerName);
                 return new CosmosDbClaimRepository(container);
             });
 
             // Register Users container
-            services.AddSingleton(s =>
+            services.AddSingleton<IUserRepository>(s =>
             {
                 var config = s.GetRequiredService<IConfiguration>();
                 var cosmosClient = s.GetRequiredService<CosmosClient>();
-                var databaseName = config["CosmosDb:DatabaseName"];
-                var usersContainerName = config["CosmosDb:Containers:Users"];
-                var container = cosmosClient.GetContainer(databaseName, usersContainerName);
+                var dbName = config["CosmosDb:DatabaseName"];
+                var containerName = config["CosmosDb:Containers:Users"];
+                var container = cosmosClient.GetContainer(dbName, containerName);
                 return new CosmosDbUserRepository(container);
             });
 
