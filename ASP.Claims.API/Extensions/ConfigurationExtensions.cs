@@ -19,8 +19,4 @@ public static class ConfigurationExtensions
 
     public static async Task<string> GetCosmosDbKeyAsync(this IConfiguration config, IWebHostEnvironment env)
         => await KeyRetrievalService.GetCosmosDbKeyAsync(config, env);
-
-
-    public static async Task<string> GetApplicationURLAsync(this IConfiguration config, IWebHostEnvironment env)
-        => await KeyRetrievalService.GetCosmosDbKeyAsync(config, env);
 }

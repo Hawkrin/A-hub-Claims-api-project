@@ -12,7 +12,6 @@ builder.ConfigureAppConfiguration();
 
 var jwtKey = await builder.Configuration.GetJwtKeyAsync(builder.Environment);
 var cosmosDbKey = await builder.Configuration.GetCosmosDbKeyAsync(builder.Environment);
-var url = await builder.Configuration.GetApplicationURLAsync(builder.Environment);
 
 builder.Services.AddJwtAndAppServices(jwtKey, cosmosDbKey, builder.Environment.IsEnvironment("Test"), builder.Configuration);
 
@@ -39,7 +38,7 @@ app.MapScalarApiReference(options =>
     options.Theme = ScalarTheme.Default;
     options.Layout = ScalarLayout.Modern;
     options.DarkMode = true;
-    var baseServerUrl = url;
+    var baseServerUrl = builder.Configuration["ApiBaseUrl"];
     if (!string.IsNullOrWhiteSpace(baseServerUrl))
     {
         options.BaseServerUrl = baseServerUrl;
