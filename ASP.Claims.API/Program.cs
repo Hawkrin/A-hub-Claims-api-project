@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using ASP.Claims.API.Extensions;
 using ASP.Claims.API.Middleware;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.ConfigureAppConfiguration();
 
 var jwtKey = await builder.Configuration.GetJwtKeyAsync(builder.Environment);
 var cosmosDbKey = await builder.Configuration.GetCosmosDbKeyAsync(builder.Environment);
+var url = await builder.Configuration.GetApplicationURLAsync(builder.Environment);
 
 builder.Services.AddJwtAndAppServices(jwtKey, cosmosDbKey, builder.Environment.IsEnvironment("Test"), builder.Configuration);
 
@@ -31,6 +33,19 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapOpenApi();
+app.MapScalarApiReference(options =>
+{
+    options.Title = "ASP Claims API";
+    options.Theme = ScalarTheme.Default;
+    options.Layout = ScalarLayout.Modern;
+    options.DarkMode = true;
+    var baseServerUrl = url;
+    if (!string.IsNullOrWhiteSpace(baseServerUrl))
+    {
+        options.BaseServerUrl = baseServerUrl;
+        options.AddServer(baseServerUrl, "Server");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
