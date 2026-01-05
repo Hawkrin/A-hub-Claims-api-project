@@ -14,21 +14,20 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
 {
     private readonly Container _container = container;
 
-    // Helper: Deserialize a JObject to the correct concrete Claim type
     private static Claim? DeserializeClaim(JObject json)
     {
-        var claimTypeString = json["ClaimType"]?.ToString();
-        if (string.IsNullOrEmpty(claimTypeString))
-            throw new Exception("ClaimType discriminator missing!");
+        var typeToken = json["Type"];
+        if (typeToken == null)
+            throw new Exception("Type discriminator missing!");
 
-        var claimType = Enum.Parse<ClaimType>(claimTypeString);
+        var claimType = (ClaimType)typeToken.Value<int>();
 
         return claimType switch
         {
             ClaimType.Property => json.ToObject<PropertyClaim>(),
             ClaimType.Vehicle => json.ToObject<VehicleClaim>(),
             ClaimType.Travel => json.ToObject<TravelClaim>(),
-            _ => throw new Exception($"Unknown ClaimType: {claimTypeString}"),
+            _ => throw new Exception($"Unknown ClaimType: {typeToken}")
         };
     }
 
