@@ -5,6 +5,7 @@ using ASP.Claims.API.Application.Profiles;
 using ASP.Claims.API.Application.Services;
 using ASP.Claims.API.Infrastructures.Repositories;
 using ASP.Claims.API.Middleware.Filters;
+using ASP.Claims.API.Settings;
 using FluentValidation;
 using Microsoft.Azure.Cosmos;
 using System.Text.Json.Serialization;
@@ -84,6 +85,18 @@ public static class ServiceCollectionExtensions
         {
             jsonOptions.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddJwtAndAppServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest, IConfiguration configuration)
+    {
+        var jwtOptions = configuration.GetSection("Jwt").Get<JwtOptions>()
+            ?? throw new InvalidOperationException("Jwt section is missing (Jwt:Issuer, Jwt:Audience).");
+
+        services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+        services.AddJwtAuthentication(jwtKey, jwtOptions);
+        services.AddApplicationServices(jwtKey, cosmosDbKey, isTest);
 
         return services;
     }
