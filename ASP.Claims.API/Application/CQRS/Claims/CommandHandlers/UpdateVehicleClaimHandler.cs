@@ -9,22 +9,27 @@ using MediatR;
 namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 
 public class UpdateVehicleClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) : 
-    IRequestHandler<UpdateVehicleClaimCommand, Result>
+    IRequestHandler<UpdateVehicleClaimCommand, Result<VehicleClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<Result> Handle(UpdateVehicleClaimCommand command, CancellationToken cancellationToken)
+    public async Task<Result<VehicleClaim>> Handle(UpdateVehicleClaimCommand command, CancellationToken cancellationToken)
     {
         var existingClaim = await _repository.GetById(command.Id);
 
-        if (existingClaim is not VehicleClaim)
-            return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
+        if (existingClaim is not VehicleClaim vehicleClaim)
+            return Result.Fail<VehicleClaim>(ErrorMessages.ErrorMessage_ClaimNotFound);
 
-        var claim = _mapper.Map<VehicleClaim>(command);
-        claim.Status = _claimStatusEvaluator.Evaluate(claim, null);
+        // Map updates onto the existing entity
+        _mapper.Map(command, vehicleClaim);
+        vehicleClaim.Status = _claimStatusEvaluator.Evaluate(vehicleClaim, null);
 
-        return await _repository.UpdateClaim(claim);
+        var updateResult = await _repository.UpdateClaim(vehicleClaim);
+        if (updateResult.IsFailed)
+            return Result.Fail<VehicleClaim>(updateResult.Errors[0].Message);
+
+        return Result.Ok(vehicleClaim);
     }
 }

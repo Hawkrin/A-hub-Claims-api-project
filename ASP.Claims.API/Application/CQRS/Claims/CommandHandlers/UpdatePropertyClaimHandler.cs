@@ -8,24 +8,31 @@ using MediatR;
 
 namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 
-public class UpdatePropertyClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) : 
-    IRequestHandler<UpdatePropertyClaimCommand, Result>
+public class UpdatePropertyClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) :
+    IRequestHandler<UpdatePropertyClaimCommand, Result<PropertyClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<Result> Handle(UpdatePropertyClaimCommand command, CancellationToken cancellationToken)
+    public async Task<Result<PropertyClaim>> Handle(UpdatePropertyClaimCommand command, CancellationToken cancellationToken)
     {
-        var existingClaim = await _repository.GetById(command.Id);
-        if (existingClaim is not PropertyClaim)
-            return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
+        var claim = await _repository.GetById(command.Id);
+        if (claim == null)
+            return Result.Fail<PropertyClaim>(ErrorMessages.ErrorMessage_ClaimNotFound);
 
-        var claim = _mapper.Map<PropertyClaim>(command);
+        _mapper.Map(command, claim);
 
         var allClaims = await _repository.GetByType(claim.Type);
         claim.Status = _claimStatusEvaluator.Evaluate(claim, allClaims);
 
-        return await _repository.UpdateClaim(claim);
+        var updateResult = await _repository.UpdateClaim(claim);
+        if (updateResult.IsFailed)
+            return Result.Fail<PropertyClaim>(updateResult.Errors[0].Message);
+
+        if (claim is not PropertyClaim propertyClaim)
+            return Result.Fail<PropertyClaim>("Claim is not a PropertyClaim.");
+
+        return Result.Ok(propertyClaim);
     }
 }

@@ -47,7 +47,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// Creates a new vehicle claim.
     /// </summary>
     /// <param name="dto">The vehicle claim data.</param>
-    /// <returns>The created claim's ID.</returns>
+    /// <returns>The created vehicle claim object.</returns>
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] VehicleClaimDto dto)
@@ -55,9 +55,13 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
         var command = _mapper.Map<CreateVehicleClaimCommand>(dto);
 
         var res = await _mediator.Send(command);
-        var id = res.ValueOrDefault;
 
-        return CreatedAtAction(nameof(GetById), new { id }, id);
+        if (res.IsFailed)
+            return BadRequest(new { message = res.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+
+        var createdClaim = res.Value;
+        var responseDto = _mapper.Map<VehicleClaimDto>(createdClaim);
+        return CreatedAtAction(nameof(GetById), new { id = createdClaim.Id }, responseDto);
     }
 
     /// <summary>
@@ -65,7 +69,7 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
     /// <param name="dto">The updated vehicle claim data.</param>
-    /// <returns>No content if successful; 400 Bad Request if IDs do not match; 404 Not Found if claim does not exist.</returns>
+    /// <returns>The updated vehicle claim object.</returns>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] VehicleClaimDto dto)
@@ -77,13 +81,15 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
 
         var result = await _mediator.Send(command);
 
-        if (result.IsSuccess)
-            return NoContent();
+        if (result.IsFailed)
+            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
 
         if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
             return NotFound(new { message = result.Errors[0].Message });
 
-        return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        var updatedClaim = result.Value;
+        var responseDto = _mapper.Map<VehicleClaimDto>(updatedClaim);
+        return Ok(responseDto);
     }
 
     /// <summary>

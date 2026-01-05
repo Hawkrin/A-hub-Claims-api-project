@@ -1,3 +1,4 @@
+using ASP.Claims.API.Domain.Entities;
 using ASP.Claims.API.Domain.Enums;
 using FluentResults;
 using MediatR;
@@ -11,7 +12,7 @@ public record CreateTravelClaimCommand(
     IncidentType IncidentType,
     DateTime ReportedDate,
     string Description
-) : IRequest<Result<Guid>>;
+) : IRequest<Result<TravelClaim>>;
 
 public record UpdateTravelClaimCommand(
     Guid Id,
@@ -22,6 +23,6 @@ public record UpdateTravelClaimCommand(
     DateTime ReportedDate,
     string Description,
     ClaimStatus? Status
-) : IRequest<Result>;
+) : IRequest<Result<TravelClaim>>;
 
 public record DeleteTravelClaimCommand(Guid Id) : IRequest<Result>;

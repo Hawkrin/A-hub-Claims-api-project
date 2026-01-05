@@ -47,17 +47,21 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
     /// Creates a new property claim.
     /// </summary>
     /// <param name="dto">The property claim data.</param>
-    /// <returns>The created claim's ID.</returns>
+    /// <returns>The created claim.</returns>
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PropertyClaimDto dto)
     {
         var command = _mapper.Map<CreatePropertyClaimCommand>(dto);
-
         var res = await _mediator.Send(command);
 
-        var id = res.ValueOrDefault;
-        return CreatedAtAction(nameof(GetById), new { id }, id);
+        if (res.IsFailed)
+            return BadRequest(res.Errors[0].Message);
+
+        var createdClaim = res.Value;
+        var responseDto = _mapper.Map<PropertyClaimDto>(createdClaim);
+
+        return CreatedAtAction(nameof(GetById), new { id = createdClaim.Id }, responseDto);
     }
 
     /// <summary>
@@ -65,7 +69,7 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
     /// </summary>
     /// <param name="id">The claim's unique identifier.</param>
     /// <param name="dto">The updated property claim data.</param>
-    /// <returns>No content if successful; 400 Bad Request if IDs do not match; 404 Not Found if claim does not exist.</returns>
+    /// <returns>The created claim; 400 Bad Request if IDs do not match; 404 Not Found if claim does not exist.</returns>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] PropertyClaimDto dto)
@@ -76,13 +80,15 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
         var command = _mapper.Map<UpdatePropertyClaimCommand>(dto);
         var result = await _mediator.Send(command);
 
-        if (result.IsSuccess)
-            return NoContent();
+        if (result.IsFailed)
+            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
 
         if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
             return NotFound(new { message = result.Errors[0].Message });
 
-        return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        var updatedClaim = result.Value;
+        var responseDto = _mapper.Map<PropertyClaimDto>(updatedClaim);
+        return Ok(responseDto);
     }
 
     /// <summary>

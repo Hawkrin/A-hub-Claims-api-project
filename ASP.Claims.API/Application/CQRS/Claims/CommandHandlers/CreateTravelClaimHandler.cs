@@ -7,19 +7,19 @@ using AutoMapper;
 using FluentResults;
 using MediatR;
 
-public class CreateTravelClaimHandler(IClaimRepository repository, IMapper mapper) : IRequestHandler<CreateTravelClaimCommand, Result<Guid>>
+public class CreateTravelClaimHandler(IClaimRepository repository, IMapper mapper) : IRequestHandler<CreateTravelClaimCommand, Result<TravelClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<Result<Guid>> Handle(CreateTravelClaimCommand command, CancellationToken cancellationToken)
+    public async Task<Result<TravelClaim>> Handle(CreateTravelClaimCommand command, CancellationToken cancellationToken)
     {
         var claim = _mapper.Map<TravelClaim>(command);
 
         var saveResult = await _repository.Save(claim);
         if (saveResult.IsFailed)
-            return Result.Fail<Guid>(saveResult.Errors[0].Message);
+            return Result.Fail<TravelClaim>(saveResult.Errors[0].Message);
 
-        return Result.Ok(claim.Id);
+        return Result.Ok(claim);
     }
 }

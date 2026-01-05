@@ -8,19 +8,23 @@ using MediatR;
 
 namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 
-public class UpdateTravelClaimHandler(IClaimRepository repository, IMapper mapper) : IRequestHandler<UpdateTravelClaimCommand, Result>
+public class UpdateTravelClaimHandler(IClaimRepository repository, IMapper mapper) : IRequestHandler<UpdateTravelClaimCommand, Result<TravelClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<Result> Handle(UpdateTravelClaimCommand command, CancellationToken cancellationToken)
+    public async Task<Result<TravelClaim>> Handle(UpdateTravelClaimCommand command, CancellationToken cancellationToken)
     {
         var existingClaim = await _repository.GetById(command.Id);
-        if (existingClaim is not TravelClaim)
-            return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
+        if (existingClaim is not TravelClaim travelClaim)
+            return Result.Fail<TravelClaim>(ErrorMessages.ErrorMessage_ClaimNotFound);
 
-        var claim = _mapper.Map<TravelClaim>(command);
+        _mapper.Map(command, travelClaim);
 
-        return await _repository.UpdateClaim(claim);  
+        var updateResult = await _repository.UpdateClaim(travelClaim);
+        if (updateResult.IsFailed)
+            return Result.Fail<TravelClaim>(updateResult.Errors[0].Message);
+
+        return Result.Ok(travelClaim);
     }
 }

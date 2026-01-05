@@ -8,13 +8,13 @@ using FluentResults;
 using MediatR;
 
 public class CreatePropertyClaimHandler(IClaimRepository repository, IMapper mapper, IClaimStatusEvaluator claimStatusEvaluator) : 
-    IRequestHandler<CreatePropertyClaimCommand, Result<Guid>>
+    IRequestHandler<CreatePropertyClaimCommand, Result<PropertyClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IMapper _mapper = mapper;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
 
-    public async Task<Result<Guid>> Handle(CreatePropertyClaimCommand command, CancellationToken cancellationToken)
+    public async Task<Result<PropertyClaim>> Handle(CreatePropertyClaimCommand command, CancellationToken cancellationToken)
     {
         var claim = _mapper.Map<PropertyClaim>(command);
 
@@ -24,8 +24,8 @@ public class CreatePropertyClaimHandler(IClaimRepository repository, IMapper map
         var saveResult = await _repository.Save(claim);
 
         if (saveResult.IsFailed)
-            return Result.Fail<Guid>(saveResult.Errors[0].Message);
+            return Result.Fail<PropertyClaim>(saveResult.Errors[0].Message);
 
-        return Result.Ok(claim.Id);
+        return Result.Ok(claim);
     }
 }
