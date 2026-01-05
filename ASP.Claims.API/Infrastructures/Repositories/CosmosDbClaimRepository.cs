@@ -54,8 +54,8 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
     public async Task<IEnumerable<Claim>> GetByType(ClaimType type)
     {
         var iterator = _container.GetItemLinqQueryable<JObject>()
-                                 .Where(c => c["ClaimType"] != null && c["ClaimType"]!.ToString() == type.ToString())
-                                 .ToFeedIterator();
+            .Where(c => c["Type"] != null && c["Type"]!.Value<int>() == (int)type)
+            .ToFeedIterator();
 
         var results = new List<Claim>();
         while (iterator.HasMoreResults)
