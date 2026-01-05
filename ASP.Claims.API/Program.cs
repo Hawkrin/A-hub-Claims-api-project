@@ -18,7 +18,6 @@ builder.Configuration
 var jwtKey = await KeyRetrievalService.GetJwtKeyAsync(builder.Configuration, builder.Environment);
 var cosmosDbKey = await KeyRetrievalService.GetCosmosDbKeyAsync(builder.Configuration, builder.Environment);
 
-// Ensure Jwt section (Issuer/Audience) exists
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException("Jwt section is missing (Jwt:Issuer, Jwt:Audience).");
 
@@ -42,13 +41,9 @@ builder.Services.AddApiVersioning(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.MapOpenApi();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapOpenApi();
 
 app.UseAuthentication();
 app.UseAuthorization();
