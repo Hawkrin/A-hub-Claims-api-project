@@ -16,7 +16,6 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest = false)
     {
-        // Key provider and repositories
         services.AddSingleton<ITokenKeyProvider>(sp => new JwtKeyProvider(jwtKey));
 
         if (isTest)
@@ -26,40 +25,19 @@ public static class ServiceCollectionExtensions
         }
         else
         {
-            // Register CosmosClient as singleton
-            services.AddSingleton(s =>
+            services.AddSingleton(sp =>
             {
-                var config = s.GetRequiredService<IConfiguration>();
+                var config = sp.GetRequiredService<IConfiguration>();
                 var account = config["CosmosDb:Account"];
                 return new CosmosClient(account, cosmosDbKey);
             });
 
-            // Register Claims container
-            services.AddSingleton<IClaimRepository>(s =>
-            {
-                var config = s.GetRequiredService<IConfiguration>();
-                var cosmosClient = s.GetRequiredService<CosmosClient>();
-                var dbName = config["CosmosDb:DatabaseName"];
-                var containerName = config["CosmosDb:Containers:Claims"];
-                var container = cosmosClient.GetContainer(dbName, containerName);
-                return new CosmosDbClaimRepository(container);
-            });
-
-            // Register Users container
-            services.AddSingleton<IUserRepository>(s =>
-            {
-                var config = s.GetRequiredService<IConfiguration>();
-                var cosmosClient = s.GetRequiredService<CosmosClient>();
-                var dbName = config["CosmosDb:DatabaseName"];
-                var containerName = config["CosmosDb:Containers:Users"];
-                var container = cosmosClient.GetContainer(dbName, containerName);
-                return new CosmosDbUserRepository(container);
-            });
+            services.AddCosmosRepository<IClaimRepository, CosmosDbClaimRepository>("CosmosDb:DatabaseName", "CosmosDb:Containers:Claims");
+            services.AddCosmosRepository<IUserRepository, CosmosDbUserRepository>("CosmosDb:DatabaseName","CosmosDb:Containers:Users");
         }
 
         services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
 
-        // AutoMapper profiles
         services.AddAutoMapper(cfg =>
         {
             cfg.AddProfile<PropertyClaimMappingProfile>();
@@ -67,16 +45,10 @@ public static class ServiceCollectionExtensions
             cfg.AddProfile<VehicleClaimMappingProfile>();
         });
 
-        // FluentValidation
         services.AddValidatorsFromAssemblyContaining<PropertyClaimDtoValidator>();
-
-        // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreatePropertyClaimCommand>());
-
-        // Localization
         services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-        // Controllers and filters
         services.AddControllers(options =>
         {
             options.Filters.Add<FluentValidationActionFilter>();
@@ -98,6 +70,23 @@ public static class ServiceCollectionExtensions
         services.AddJwtAuthentication(jwtKey, jwtOptions);
         services.AddApplicationServices(jwtKey, cosmosDbKey, isTest);
 
+        return services;
+    }
+
+    public static IServiceCollection AddCosmosRepository<TInterface, TImplementation>(this IServiceCollection services, string dbNameConfigKey, string containerNameConfigKey)
+    where TInterface : class
+    where TImplementation : class, TInterface
+    {
+        services.AddSingleton<TImplementation>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var cosmosClient = sp.GetRequiredService<CosmosClient>();
+            var dbName = config[dbNameConfigKey];
+            var containerName = config[containerNameConfigKey];
+            var container = cosmosClient.GetContainer(dbName, containerName);
+            return (TImplementation)Activator.CreateInstance(typeof(TImplementation), container)!;
+        });
+        services.AddSingleton<TInterface>(sp => sp.GetRequiredService<TImplementation>());
         return services;
     }
 }

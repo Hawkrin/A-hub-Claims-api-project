@@ -1,4 +1,6 @@
-﻿namespace ASP.Claims.API.Extensions;
+﻿using Microsoft.Azure.Cosmos;
+
+namespace ASP.Claims.API.Extensions;
 
 public static class ConfigurationExtensions
 {
