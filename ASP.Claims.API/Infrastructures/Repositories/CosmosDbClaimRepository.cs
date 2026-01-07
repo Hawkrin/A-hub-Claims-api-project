@@ -16,7 +16,7 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
 
     private static Claim? DeserializeClaim(JObject json)
     {
-        var typeToken = json["ClaimType"] ?? throw new Exception("Type discriminator missing!");
+        var typeToken = json["Type"] ?? throw new Exception("Type discriminator missing!");
         var claimType = (ClaimType)typeToken.Value<int>();
 
         return claimType switch
