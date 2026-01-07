@@ -31,17 +31,19 @@ public static class ServiceCollectionExtensions
                 var config = sp.GetRequiredService<IConfiguration>();
                 var account = config["CosmosDb:Account"];
 
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                };
+                //var jsonOptions = new JsonSerializerOptions
+                //{
+                //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                //};
 
-                var cosmosOptions = new CosmosClientOptions
-                {
-                    Serializer = new CosmosSystemTextJsonSerializer(jsonOptions)
-                };
+                //var cosmosOptions = new CosmosClientOptions
+                //{
+                //    Serializer = new CosmosSystemTextJsonSerializer(jsonOptions)
+                //};
 
-                return new CosmosClient(account, cosmosDbKey, cosmosOptions);
+                //return new CosmosClient(account, cosmosDbKey, cosmosOptions);
+
+                return new CosmosClient(account, cosmosDbKey);
             });
 
             services.AddCosmosRepository<IClaimRepository, CosmosDbClaimRepository>("CosmosDb:DatabaseName", "CosmosDb:Containers:Claims");
