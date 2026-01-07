@@ -73,6 +73,7 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
     public async Task<IActionResult> Login([FromBody] LoginDto login)
     {
         var user = await _userRepo.GetByUsernameAsync(login.Username);
+        Console.WriteLine($"Fetched user: {user?.Username}, Password: {user?.Password}, Role: {user?.Role}");
         if (user == null)
             return Unauthorized("Invalid username or password.");
 
