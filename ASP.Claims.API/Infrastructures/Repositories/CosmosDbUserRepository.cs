@@ -11,8 +11,8 @@ public class CosmosDbUserRepository(Cosmos.Container container) : IUserRepositor
     public async Task<User?> GetByUsernameAsync(string username)
     {
         var iterator = container.GetItemLinqQueryable<User>()
-                                .Where(u => u.Username == username)
-                                .ToFeedIterator();
+            .Where(u => u.Username == username)
+            .ToFeedIterator();
 
         while (iterator.HasMoreResults)
         {

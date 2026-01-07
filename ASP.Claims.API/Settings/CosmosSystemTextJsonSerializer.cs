@@ -1,42 +1,37 @@
-﻿//namespace ASP.Claims.API.Settings;
+﻿namespace ASP.Claims.API.Settings;
 
-//using Microsoft.Azure.Cosmos;
-//using System.Text.Json;
-//using System.Text.Json.Serialization;
-//using System.IO;
+using Microsoft.Azure.Cosmos;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.IO;
 
-//public class CosmosSystemTextJsonSerializer : CosmosSerializer
-//{
-//    private readonly JsonSerializerOptions _options;
+public class CosmosSystemTextJsonSerializer(JsonSerializerOptions options) : CosmosSerializer
+{
+    private readonly JsonSerializerOptions _options = options;
 
-//    public CosmosSystemTextJsonSerializer(JsonSerializerOptions options)
-//    {
-//        _options = options;
-//    }
+    public override T FromStream<T>(Stream stream)
+    {
+        if (stream == null || stream.CanRead == false)
+        {
+            return default!;
+        }
 
-//    public override T FromStream<T>(Stream stream)
-//    {
-//        if (stream == null || stream.CanRead == false)
-//        {
-//            return default;
-//        }
+        if (typeof(Stream).IsAssignableFrom(typeof(T)))
+        {
+            return (T)(object)stream;
+        }
 
-//        if (typeof(Stream).IsAssignableFrom(typeof(T)))
-//        {
-//            return (T)(object)stream;
-//        }
+        using (stream)
+        {
+            return JsonSerializer.DeserializeAsync<T>(stream, _options).GetAwaiter().GetResult()!;
+        }
+    }
 
-//        using (stream)
-//        {
-//            return JsonSerializer.DeserializeAsync<T>(stream, _options).GetAwaiter().GetResult();
-//        }
-//    }
-
-//    public override Stream ToStream<T>(T input)
-//    {
-//        var stream = new MemoryStream();
-//        JsonSerializer.SerializeAsync(stream, input, _options).GetAwaiter().GetResult();
-//        stream.Position = 0;
-//        return stream;
-//    }
-//}
+    public override Stream ToStream<T>(T input)
+    {
+        var stream = new MemoryStream();
+        JsonSerializer.SerializeAsync(stream, input, _options).GetAwaiter().GetResult();
+        stream.Position = 0;
+        return stream;
+    }
+}
