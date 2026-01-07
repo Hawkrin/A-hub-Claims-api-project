@@ -40,6 +40,28 @@ ASP.Claims.API/
 └── ...                        # Övriga rotfiler
 ```
 
+```text2
+User
+  ↓
+[Validation Filter]
+  ↓
+API Controller (DTO)
+  ↓
+[Authorization]
+  ↓
+AutoMapper (DTO → Command)
+  ↓
+Application Layer (CQRS)
+  ↓
+[Business Logic, Domain Events]
+  ↓
+AutoMapper (Command → Entity)
+  ↓
+Repository
+  ↓
+Database
+```
+
 Projektet är organiserat enligt följande lager och mappar:
 
 -	**API**        
