@@ -12,7 +12,7 @@ public class CosmosDbClaimRepositoryTests
     public void DeserializeClaim_PropertyClaim_Works()
     {
         var guid = Guid.NewGuid();
-        var json = JObject.FromObject(new { ClaimType = 1, Id = guid, PropertySpecific = "foo" });
+        var json = JObject.FromObject(new { Type = 1, Id = guid, PropertySpecific = "foo" });
 
         var claim = InvokeDeserializeClaim(json);
 
@@ -24,7 +24,7 @@ public class CosmosDbClaimRepositoryTests
     public void DeserializeClaim_TravelClaim_Works()
     {
         var guid = Guid.NewGuid();
-        var json = JObject.FromObject(new { ClaimType = 2, Id = guid, VehicleSpecific = "bar" });
+        var json = JObject.FromObject(new { Type = 2, Id = guid, VehicleSpecific = "bar" });
 
         var claim = InvokeDeserializeClaim(json);
 
@@ -36,7 +36,7 @@ public class CosmosDbClaimRepositoryTests
     public void DeserializeClaim_VehicleClaim_Works()
     {
         var guid = Guid.NewGuid();
-        var json = JObject.FromObject(new { ClaimType = 0, Id = guid, TravelSpecific = "baz" });
+        var json = JObject.FromObject(new { Type = 0, Id = guid, TravelSpecific = "baz" });
 
         var claim = InvokeDeserializeClaim(json);
 
