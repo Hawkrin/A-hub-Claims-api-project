@@ -34,7 +34,6 @@ public static class ServiceCollectionExtensions
                 var jsonOptions = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    Converters = { new JsonStringEnumConverter() }
                 };
 
                 var cosmosOptions = new CosmosClientOptions
