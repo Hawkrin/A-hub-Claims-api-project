@@ -14,9 +14,10 @@ public class TravelClaimMappingProfile : Profile
         CreateMap<TravelClaimDto, UpdateTravelClaimCommand>();
 
         CreateMap<CreateTravelClaimCommand, TravelClaim>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
             .ForMember(dest => dest.Status, opt => opt.Ignore());
 
         CreateMap<UpdateTravelClaimCommand, TravelClaim>();
+
+        CreateMap<TravelClaim, TravelClaimDto>();
     }
 }

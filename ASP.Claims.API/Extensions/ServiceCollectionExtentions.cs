@@ -8,6 +8,7 @@ using ASP.Claims.API.Middleware.Filters;
 using ASP.Claims.API.Settings;
 using FluentValidation;
 using Microsoft.Azure.Cosmos;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ASP.Claims.API.Extensions;
@@ -29,7 +30,19 @@ public static class ServiceCollectionExtensions
             {
                 var config = sp.GetRequiredService<IConfiguration>();
                 var account = config["CosmosDb:Account"];
-                return new CosmosClient(account, cosmosDbKey);
+
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new JsonStringEnumConverter() }
+                };
+
+                var cosmosOptions = new CosmosClientOptions
+                {
+                    Serializer = new CosmosSystemTextJsonSerializer(jsonOptions)
+                };
+
+                return new CosmosClient(account, cosmosDbKey, cosmosOptions);
             });
 
             services.AddCosmosRepository<IClaimRepository, CosmosDbClaimRepository>("CosmosDb:DatabaseName", "CosmosDb:Containers:Claims");

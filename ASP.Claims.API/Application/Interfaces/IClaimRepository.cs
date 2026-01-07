@@ -10,6 +10,6 @@ public interface IClaimRepository
     Task<Claim?> GetById(Guid id);
     Task<IEnumerable<Claim>> GetAll();
     Task<IEnumerable<Claim>> GetByType(ClaimType type);
-    Task<Result> UpdateClaim(Claim claim);
+    Task<Result<Claim>> UpdateClaim(Claim claim);
     Task<Result> DeleteClaim(Guid id);
 }

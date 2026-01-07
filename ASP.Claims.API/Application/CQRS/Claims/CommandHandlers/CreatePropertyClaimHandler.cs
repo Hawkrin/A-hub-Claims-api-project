@@ -17,6 +17,7 @@ public class CreatePropertyClaimHandler(IClaimRepository repository, IMapper map
     public async Task<Result<PropertyClaim>> Handle(CreatePropertyClaimCommand command, CancellationToken cancellationToken)
     {
         var claim = _mapper.Map<PropertyClaim>(command);
+        claim.Id = Guid.NewGuid();
 
         var allClaims = await _repository.GetByType(claim.Type);
         claim.Status = _claimStatusEvaluator.Evaluate(claim, allClaims);

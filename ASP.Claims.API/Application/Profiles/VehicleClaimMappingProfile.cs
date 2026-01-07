@@ -14,9 +14,10 @@ public class VehicleClaimMappingProfile : Profile
         CreateMap<VehicleClaimDto, UpdateVehicleClaimCommand>();
 
         CreateMap<CreateVehicleClaimCommand, VehicleClaim>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
             .ForMember(dest => dest.Status, opt => opt.Ignore());
 
         CreateMap<UpdateVehicleClaimCommand, VehicleClaim>();
+
+        CreateMap<VehicleClaim, VehicleClaimDto>();
     }
 }

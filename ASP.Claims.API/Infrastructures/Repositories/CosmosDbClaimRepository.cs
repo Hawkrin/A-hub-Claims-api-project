@@ -16,7 +16,7 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
 
     private static Claim? DeserializeClaim(JObject json)
     {
-        var typeToken = json["Type"] ?? throw new Exception("Type discriminator missing!");
+        var typeToken = json["ClaimType"] ?? throw new Exception("Type discriminator missing!");
         var claimType = (ClaimType)typeToken.Value<int>();
 
         return claimType switch
@@ -112,16 +112,18 @@ public class CosmosDbClaimRepository(Container container) : IClaimRepository
         }
     }
 
-    public async Task<Result> UpdateClaim(Claim claim)
+    public async Task<Result<Claim>> UpdateClaim(Claim claim)
     {
         try
         {
-            await _container.ReplaceItemAsync(claim, claim.Id.ToString(), new PartitionKey(claim.Id.ToString()));
-            return Result.Ok();
+            var response = await _container.ReplaceItemAsync(claim, claim.Id.ToString(), new PartitionKey(claim.Id.ToString()));
+            var updatedClaim = response.Resource;
+
+            return Result.Ok(updatedClaim);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            return Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound);
+            return Result.Fail<Claim>(ErrorMessages.ErrorMessage_ClaimNotFound);
         }
         catch (Exception ex)
         {

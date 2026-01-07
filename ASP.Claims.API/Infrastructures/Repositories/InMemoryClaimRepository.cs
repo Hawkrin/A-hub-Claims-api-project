@@ -38,18 +38,18 @@ public class InMemoryClaimRepository : IClaimRepository
         }
     }
 
-    public Task<Result> UpdateClaim(Claim claim)
+    public Task<Result<Claim>> UpdateClaim(Claim claim)
     {
         var index = _claims.FindIndex(c => c.Id == claim.Id);
 
         if (index >= 0)
         {
             _claims[index] = claim;
-            return Task.FromResult(Result.Ok());
+            return Task.FromResult(Result.Ok(claim));
         }
         else
         {
-            return Task.FromResult(Result.Fail(ErrorMessages.ErrorMessage_ClaimNotFound));
+            return Task.FromResult(Result.Fail<Claim>(ErrorMessages.ErrorMessage_ClaimNotFound));
         }
     }
 

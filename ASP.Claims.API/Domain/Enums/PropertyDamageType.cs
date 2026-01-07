@@ -3,9 +3,9 @@
 public enum PropertyDamageType
 {
     //[Display(ResourceType = typeof(ResourceStrings), Name = "PropertyDamageType_Fire_SE")]
-    Fire,
+    Fire = 0,
     //[Display(ResourceType = typeof(ResourceStrings), Name = "PropertyDamageType_Water_SE")]
-    Water,
+    Water = 1,
     //[Display(ResourceType = typeof(ResourceStrings), Name = "PropertyDamageType_Theft_SE")]
-    Theft
+    Theft = 2
 }

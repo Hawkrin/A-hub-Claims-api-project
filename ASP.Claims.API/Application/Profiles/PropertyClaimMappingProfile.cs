@@ -14,9 +14,10 @@ public class PropertyClaimMappingProfile : Profile
         CreateMap<PropertyClaimDto, UpdatePropertyClaimCommand>();
 
         CreateMap<CreatePropertyClaimCommand, PropertyClaim>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
             .ForMember(dest => dest.Status, opt => opt.Ignore()); // Status set by evaluator
 
         CreateMap<UpdatePropertyClaimCommand, PropertyClaim>();
+
+        CreateMap<PropertyClaim, PropertyClaimDto>();
     }
 }
