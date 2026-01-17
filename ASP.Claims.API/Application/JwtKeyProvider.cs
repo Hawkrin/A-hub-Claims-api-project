@@ -1,6 +1,6 @@
 ﻿using ASP.Claims.API.Application.Interfaces;
 
-namespace ASP.Claims.API.Application.Services;
+namespace ASP.Claims.API.Application;
 
 public class JwtKeyProvider(string key) : ITokenKeyProvider
 {

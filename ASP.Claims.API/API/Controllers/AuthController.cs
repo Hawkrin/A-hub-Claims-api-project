@@ -20,38 +20,12 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
     private readonly ITokenKeyProvider _tokenKeyProvider = tokenKeyProvider;
     private readonly JwtOptions _jwtOptions = jwtOptionsAccessor.Value;
 
-    [HttpPost("token")]
-    public async Task<IActionResult> GenerateToken([FromBody] LoginDto login)
-    {
-        var user = await _userRepo.GetByUsernameAsync(login.Username);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
-            return Unauthorized();
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role.ToString() ?? "User")
-        };
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_tokenKeyProvider.Key));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: _jwtOptions.Issuer,
-            audience: _jwtOptions.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: creds);
-
-        return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
-    }
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
         var existing = await _userRepo.GetByUsernameAsync(dto.Username);
         if (existing != null)
-            return BadRequest("User already exists.");
+            return BadRequest(new { error = "Username already exists." });
 
         var user = new User
         {
@@ -63,22 +37,20 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
 
         var result = await _userRepo.SaveAsync(user);
         if (result.IsFailed)
-            return BadRequest(result.Errors[0].Message);
+            return BadRequest(new { error = result.Errors[0].Message });
 
-        return Ok("User registered.");
+        return Ok(new { message = "User registered successfully." });
     }
-
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto login)
     {
         var user = await _userRepo.GetByUsernameAsync(login.Username);
         if (user == null)
-            return Unauthorized("Invalid username or password.");
+            return Unauthorized(new { error = "Invalid username or password." });
 
-        // Verify password using BCrypt
         if (!BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
-            return Unauthorized("Invalid username or password.");
+            return Unauthorized(new { error = "Invalid username or password." });
 
         var claims = new[]
         {

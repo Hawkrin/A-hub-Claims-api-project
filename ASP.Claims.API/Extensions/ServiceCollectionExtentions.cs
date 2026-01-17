@@ -1,4 +1,5 @@
 ﻿using ASP.Claims.API.API.Validators;
+using ASP.Claims.API.Application;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Application.Profiles;
