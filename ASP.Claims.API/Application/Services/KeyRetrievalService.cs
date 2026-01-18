@@ -9,7 +9,13 @@ public static class KeyRetrievalService
     public static async Task<string> GetJwtKeyAsync(IConfiguration config, IWebHostEnvironment env)
     {
         if (env.IsEnvironment("Test"))
-            return config["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")!;
+        {
+            var testKey = config["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey");
+            if (!string.IsNullOrWhiteSpace(testKey))
+                return testKey;
+            
+            throw new InvalidOperationException("TestJwt:TestKey is missing in test configuration.");
+        }
 
         // Use local key for Development
         if (env.IsDevelopment())
@@ -33,7 +39,13 @@ public static class KeyRetrievalService
     public static async Task<string> GetCosmosDbKeyAsync(IConfiguration config, IWebHostEnvironment env)
     {
         if (env.IsEnvironment("Test"))
-            return config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")!;
+        {
+            var testKey = config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key");
+            if (!string.IsNullOrWhiteSpace(testKey))
+                return testKey;
+            
+            throw new InvalidOperationException("CosmosDb:Key is missing in test configuration.");
+        }
 
         // Use local emulator key for Development
         if (env.IsDevelopment())
