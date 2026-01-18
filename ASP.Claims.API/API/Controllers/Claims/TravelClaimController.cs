@@ -53,13 +53,12 @@ public class TravelClaimController(IMediator mediator, IMapper mapper) : Control
     public async Task<IActionResult> Create([FromBody] TravelClaimDto dto)
     {
         var command = _mapper.Map<CreateTravelClaimCommand>(dto);
-
         var res = await _mediator.Send(command);
 
         if (res.IsFailed)
             return BadRequest(new { message = res.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
 
-        var createdClaim = res.Value; // TravelClaim entity
+        var createdClaim = res.Value;
         var responseDto = _mapper.Map<TravelClaimDto>(createdClaim);
         return CreatedAtAction(nameof(GetById), new { id = createdClaim.Id }, responseDto);
     }
@@ -78,14 +77,15 @@ public class TravelClaimController(IMediator mediator, IMapper mapper) : Control
             return BadRequest(new { message = ErrorMessages.ErrorMessage_RouteIdAndDTOIdDoNotMatch });
 
         var command = _mapper.Map<UpdateTravelClaimCommand>(dto);
-
         var result = await _mediator.Send(command);
 
         if (result.IsFailed)
-            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        {
+            if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
+                return NotFound(new { message = result.Errors[0].Message });
 
-        if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
-            return NotFound(new { message = result.Errors[0].Message });
+            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        }
 
         var updatedClaim = result.Value;
         var responseDto = _mapper.Map<TravelClaimDto>(updatedClaim);

@@ -1,4 +1,4 @@
-﻿using ASP.Claims.API.API.DTOs;
+using ASP.Claims.API.API.DTOs;
 using ASP.Claims.API.Domain.Enums;
 using ASP.Claims.API.Test.Setup;
 using FluentAssertions;
@@ -31,8 +31,8 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
     {
         var dto = new RegisterDto
         {
-            Username = "newuser",
-            Password = "NewUserPassword!",
+            Username = "newuser_f128ead62d7e4701a7f3754c3c188c56",
+            Password = "NewUserPassword1!",
             Role = Role.User
         };
         var response = await _client.PostAsJsonAsync("/api/Auth/register", dto);

@@ -13,8 +13,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception");
-            Console.WriteLine($"[Global Exception] {ex}"); // Ensure exception is written to stdout/log stream
+            _logger.LogError(ex, "Unhandled exception occurred. Path: {Path}, Method: {Method}", 
+                context.Request.Path, context.Request.Method);
+            
             context.Response.StatusCode = 500;
             context.Response.ContentType = "application/json";
             var error = new { Message = "An unexpected error occurred." };

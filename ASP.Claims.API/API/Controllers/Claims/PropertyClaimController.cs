@@ -81,10 +81,12 @@ public class PropertyClaimController(IMediator mediator, IMapper mapper) : Contr
         var result = await _mediator.Send(command);
 
         if (result.IsFailed)
-            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        {
+            if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
+                return NotFound(new { message = result.Errors[0].Message });
 
-        if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
-            return NotFound(new { message = result.Errors[0].Message });
+            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        }
 
         var updatedClaim = result.Value;
         var responseDto = _mapper.Map<PropertyClaimDto>(updatedClaim);

@@ -53,7 +53,6 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
     public async Task<IActionResult> Create([FromBody] VehicleClaimDto dto)
     {
         var command = _mapper.Map<CreateVehicleClaimCommand>(dto);
-
         var res = await _mediator.Send(command);
 
         if (res.IsFailed)
@@ -78,14 +77,15 @@ public class VehicleClaimController(IMediator mediator, IMapper mapper) : Contro
             return BadRequest(new { message = ErrorMessages.ErrorMessage_RouteIdAndDTOIdDoNotMatch });
 
         var command = _mapper.Map<UpdateVehicleClaimCommand>(dto);
-
         var result = await _mediator.Send(command);
 
         if (result.IsFailed)
-            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        {
+            if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
+                return NotFound(new { message = result.Errors[0].Message });
 
-        if (result.Errors.Any(e => e.Message == ErrorMessages.ErrorMessage_ClaimNotFound))
-            return NotFound(new { message = result.Errors[0].Message });
+            return BadRequest(new { message = result.Errors[0]?.Message ?? ErrorMessages.ErrorMessage_UnknownError });
+        }
 
         var updatedClaim = result.Value;
         var responseDto = _mapper.Map<VehicleClaimDto>(updatedClaim);

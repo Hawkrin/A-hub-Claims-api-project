@@ -7,13 +7,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+if (!builder.Environment.IsDevelopment())
+    builder.Logging.AddApplicationInsights();
 
 builder.ConfigureAppConfiguration();
 
 var jwtKey = await builder.Configuration.GetJwtKeyAsync(builder.Environment);
 var cosmosDbKey = await builder.Configuration.GetCosmosDbKeyAsync(builder.Environment);
 
-builder.Services.AddJwtAndAppServices(jwtKey, cosmosDbKey, builder.Environment.IsEnvironment("Test"), builder.Configuration);
+builder.Services.AddJwtAndAppServices(jwtKey, cosmosDbKey, builder.Environment.IsEnvironment("Test"), builder.Configuration, builder.Environment);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -25,6 +29,15 @@ builder.Services.AddApiVersioning(options =>
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
+
+// Add HTTP request logging
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.RequestPath |
+                           Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.RequestMethod |
+                           Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.ResponseStatusCode |
+                           Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.Duration;
 });
 
 var app = builder.Build();
@@ -46,6 +59,8 @@ app.MapScalarApiReference(options =>
     }
 });
 
+app.UseMiddleware<RequestCorrelationMiddleware>();
+app.UseHttpLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlingMiddleware>();

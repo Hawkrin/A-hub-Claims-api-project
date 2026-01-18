@@ -11,6 +11,14 @@ public static class KeyRetrievalService
         if (env.IsEnvironment("Test"))
             return config["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey")!;
 
+        // Use local key for Development
+        if (env.IsDevelopment())
+        {
+            var localKey = config["Jwt:Key"];
+            if (!string.IsNullOrWhiteSpace(localKey))
+                return localKey;
+        }
+
         var keyVaultSettings = config.GetSection("KeyVault").Get<KeyVaultSettings>()
             ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");
 
@@ -26,6 +34,14 @@ public static class KeyRetrievalService
     {
         if (env.IsEnvironment("Test"))
             return config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key")!;
+
+        // Use local emulator key for Development
+        if (env.IsDevelopment())
+        {
+            var localKey = config["CosmosDb:Key"];
+            if (!string.IsNullOrWhiteSpace(localKey))
+                return localKey;
+        }
 
         var keyVaultSettings = config.GetSection("KeyVault").Get<KeyVaultSettings>()
             ?? throw new InvalidOperationException("KeyVault section is missing in configuration.");

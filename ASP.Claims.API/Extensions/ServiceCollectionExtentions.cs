@@ -16,11 +16,14 @@ namespace ASP.Claims.API.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest = false)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest = false, IWebHostEnvironment? env = null)
     {
         services.AddSingleton<ITokenKeyProvider>(sp => new JwtKeyProvider(jwtKey));
 
-        if (isTest)
+        // Use InMemory repositories for Test AND Development
+        bool useInMemory = isTest || (env?.IsDevelopment() ?? false);
+
+        if (useInMemory)
         {
             services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
             services.AddSingleton<IUserRepository, InMemoryUserRepository>();
@@ -67,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddControllers(options =>
         {
             options.Filters.Add<FluentValidationActionFilter>();
+            options.Filters.Add<LoggingActionFilter>();
         })
         .AddJsonOptions(jsonOptions =>
         {
@@ -76,14 +80,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddJwtAndAppServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest, IConfiguration configuration)
+    public static IServiceCollection AddJwtAndAppServices(this IServiceCollection services, string jwtKey, string cosmosDbKey, bool isTest, IConfiguration configuration, IWebHostEnvironment? env = null)
     {
         var jwtOptions = configuration.GetSection("Jwt").Get<JwtOptions>()
             ?? throw new InvalidOperationException("Jwt section is missing (Jwt:Issuer, Jwt:Audience).");
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.AddJwtAuthentication(jwtKey, jwtOptions);
-        services.AddApplicationServices(jwtKey, cosmosDbKey, isTest);
+        services.AddApplicationServices(jwtKey, cosmosDbKey, isTest, env);
 
         return services;
     }

@@ -70,4 +70,10 @@ public class AuthController(IUserRepository userRepo, ITokenKeyProvider tokenKey
 
         return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
     }
+
+    [HttpPost("token")]
+    public async Task<IActionResult> GenerateToken([FromBody] LoginDto login)
+    {
+        return await Login(login);
+    }
 }
