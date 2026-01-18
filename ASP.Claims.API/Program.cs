@@ -5,12 +5,20 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplicationInsightsTelemetry();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-if (!builder.Environment.IsDevelopment())
-    builder.Logging.AddApplicationInsights();
+var aiConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+if (!string.IsNullOrWhiteSpace(aiConnectionString))
+{
+    builder.Logging.AddApplicationInsights(
+        configureTelemetryConfiguration: (config) => 
+            config.ConnectionString = aiConnectionString,
+        configureApplicationInsightsLoggerOptions: (options) => { }
+    );
+}
 
 builder.ConfigureAppConfiguration();
 
