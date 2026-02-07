@@ -8,7 +8,8 @@ using ASP.Claims.API.Infrastructures.Repositories;
 namespace ASP.Claims.API.Test.Setup;
 
 /// <summary>
-/// Overrides the default WebApplicationFactory to configure test authentication and force in-memory repository.
+/// Overrides the default WebApplicationFactory to configure test authentication.
+/// Uses Cosmos emulator if Cosmos config is present; otherwise forces in-memory repositories.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -16,7 +17,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Test");
 
-        builder.ConfigureServices(services =>
+        builder.ConfigureServices((context, services) =>
         {
             services.AddAuthentication(options =>
             {
@@ -25,18 +26,25 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             })
             .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.TestScheme, options => { });
 
-            // Remove all IClaimRepository registrations
+            var cfg = context.Configuration;
+            var cosmosConfigured = !string.IsNullOrWhiteSpace(cfg["CosmosDb:Account"])
+                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:DatabaseName"])
+                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:Containers:Claims"])
+                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:Containers:Users"]);
+
+            if (cosmosConfigured)
+                return;
+
+            // Fallback to in-memory for tests when Cosmos isn't configured
+
             var claimDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IClaimRepository));
             if (claimDescriptor != null)
                 services.Remove(claimDescriptor);
-            // Register InMemoryClaimRepository
             services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
 
-            // Remove all IUserRepository registrations
             var userDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IUserRepository));
             if (userDescriptor != null)
                 services.Remove(userDescriptor);
-            // Register InMemoryUserRepository
             services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         });
     }

@@ -6,6 +6,9 @@ using Azure.Security.KeyVault.Secrets;
 
 public static class KeyRetrievalService
 {
+    // Azure Cosmos DB Emulator well-known key (same for all installations)
+    private const string CosmosEmulatorWellKnownKey = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
+
     public static async Task<string> GetJwtKeyAsync(IConfiguration config, IWebHostEnvironment env)
     {
         if (env.IsEnvironment("Test"))
@@ -13,11 +16,10 @@ public static class KeyRetrievalService
             var testKey = config["TestJwt:TestKey"] ?? Environment.GetEnvironmentVariable("TestJwt__TestKey");
             if (!string.IsNullOrWhiteSpace(testKey))
                 return testKey;
-            
+
             throw new InvalidOperationException("TestJwt:TestKey is missing in test configuration.");
         }
 
-        // Use local key for Development
         if (env.IsDevelopment())
         {
             var localKey = config["Jwt:Key"];
@@ -38,21 +40,15 @@ public static class KeyRetrievalService
 
     public static async Task<string> GetCosmosDbKeyAsync(IConfiguration config, IWebHostEnvironment env)
     {
-        if (env.IsEnvironment("Test"))
-        {
-            var testKey = config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key");
-            if (!string.IsNullOrWhiteSpace(testKey))
-                return testKey;
-            
-            throw new InvalidOperationException("CosmosDb:Key is missing in test configuration.");
-        }
+        var configuredKey = config["CosmosDb:Key"] ?? Environment.GetEnvironmentVariable("CosmosDb__Key");
 
-        // Use local emulator key for Development
-        if (env.IsDevelopment())
+        // Dev/Test: allow using emulator key without requiring configuration.
+        if (env.IsDevelopment() || env.IsEnvironment("Test"))
         {
-            var localKey = config["CosmosDb:Key"];
-            if (!string.IsNullOrWhiteSpace(localKey))
-                return localKey;
+            if (!string.IsNullOrWhiteSpace(configuredKey))
+                return configuredKey;
+
+            return CosmosEmulatorWellKnownKey;
         }
 
         var keyVaultSettings = config.GetSection("KeyVault").Get<KeyVaultSettings>()

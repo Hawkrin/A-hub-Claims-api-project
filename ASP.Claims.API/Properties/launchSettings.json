@@ -10,11 +10,13 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "https": {
-      "commandName": "Project",
+    "https (with Cosmos Emulator)": {
+      "commandName": "Executable",
+      "executablePath": "powershell.exe",
+      "commandLineArgs": "-NoProfile -ExecutionPolicy Bypass -File \"$(SolutionDir)scripts\\Start-CosmosEmulator.ps1\"; if ($LASTEXITCODE -eq 0) { dotnet run --project \"$(SolutionDir)ASP.Claims.API\\ASP.Claims.API.csproj\" --launch-profile http }",
+      "workingDirectory": "$(SolutionDir)",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:7222;http://localhost:5020",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

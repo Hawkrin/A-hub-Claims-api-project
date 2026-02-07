@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Aspire.Azure.Data.Tables" Version="9.1.0" />
+    <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="9.1.0" />
     <PackageReference Include="AutoMapper" Version="15.1.0" />
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
@@ -29,6 +31,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ASP.Claims.ServiceDefaults\ASP.Claims.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
