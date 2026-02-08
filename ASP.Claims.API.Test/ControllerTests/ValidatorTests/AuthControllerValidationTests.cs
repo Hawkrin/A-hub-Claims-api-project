@@ -176,7 +176,7 @@ public class AuthControllerValidationTests(CustomWebApplicationFactory factory) 
     {
         var dto = new RegisterDto
         {
-            Username = "newvaliduser",
+            Username = $"newvaliduser_{Guid.NewGuid():N}",  // Unique username per test run
             Password = "ValidPass123",
             Role = Role.User
         };
