@@ -16,7 +16,7 @@ if (builder.Environment.IsProduction() || builder.Configuration.GetValue<bool>("
 {
     try
     {
-        // Use Cosmos DB for audit logs (SEPARATE DATABASE for compliance)
+        // Use Cosmos DB for audit logs (connects to standalone emulator at localhost:8081)
         var connectionString = builder.Configuration.GetConnectionString("AuditDb");
         
         if (!string.IsNullOrEmpty(connectionString))
@@ -46,8 +46,7 @@ if (builder.Environment.IsProduction() || builder.Configuration.GetValue<bool>("
                 var config = sp.GetRequiredService<IConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<CosmosDbAuditRepository>>();
                 
-                // SEPARATE DATABASE for audit compliance
-                var databaseName = config["CosmosDb:DatabaseName"] ?? "AuditDb";
+                var databaseName = config["CosmosDb:DatabaseName"] ?? "ClaimsDb";
                 var containerName = config["CosmosDb:Containers:AuditLogs"] ?? "AuditLogs";
                 
                 var container = cosmosClient.GetContainer(databaseName, containerName);
@@ -55,26 +54,38 @@ if (builder.Environment.IsProduction() || builder.Configuration.GetValue<bool>("
                 return new CosmosDbAuditRepository(container, logger);
             });
             
-            Console.WriteLine("? AuditWorker configured to use SEPARATE Cosmos DB (AuditDb) for compliance");
+            Console.WriteLine("? Audit Logger configured to use Cosmos DB Emulator (localhost:8081)");
         }
         else
         {
             Console.WriteLine("??  Cosmos DB connection string not found, falling back to in-memory");
-            builder.Services.AddSingleton<IAuditRepository, InMemoryAuditRepository>();
+            builder.Services.AddSingleton<IAuditRepository>(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<InMemoryAuditRepository>>();
+                return new InMemoryAuditRepository(logger);
+            });
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"??  Failed to configure Cosmos DB, falling back to in-memory: {ex.Message}");
-        builder.Services.AddSingleton<IAuditRepository, InMemoryAuditRepository>();
+        builder.Services.AddSingleton<IAuditRepository>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<InMemoryAuditRepository>>();
+            return new InMemoryAuditRepository(logger);
+        });
     }
 }
 else
 {
     // Development: Use in-memory storage
-    builder.Services.AddSingleton<IAuditRepository, InMemoryAuditRepository>();
+    builder.Services.AddSingleton<IAuditRepository>(sp =>
+    {
+        var logger = sp.GetRequiredService<ILogger<InMemoryAuditRepository>>();
+        return new InMemoryAuditRepository(logger);
+    });
     
-    Console.WriteLine("??  AuditWorker configured to use IN-MEMORY storage (Development mode)");
+    Console.WriteLine("?? Audit Logger configured to use IN-MEMORY storage (Development mode)");
 }
 
 builder.Services.AddHostedService<Worker>();
@@ -88,12 +99,11 @@ if (builder.Environment.IsProduction() || builder.Configuration.GetValue<bool>("
     if (cosmosClient != null)
     {
         var config = host.Services.GetRequiredService<IConfiguration>();
-        var databaseName = config["CosmosDb:DatabaseName"] ?? "AuditDb";
+        var databaseName = config["CosmosDb:DatabaseName"] ?? "ClaimsDb";
         var containerName = config["CosmosDb:Containers:AuditLogs"] ?? "AuditLogs";
         
         try
         {
-            // Create SEPARATE audit database
             var database = await cosmosClient.CreateDatabaseIfNotExistsAsync(databaseName);
             
             await database.Database.CreateContainerIfNotExistsAsync(
@@ -106,9 +116,9 @@ if (builder.Environment.IsProduction() || builder.Configuration.GetValue<bool>("
                 throughput: 400 // Low throughput for audit logs (cost optimization)
             );
             
-            Console.WriteLine($"? Separate audit database initialized: {databaseName}/{containerName}");
-            Console.WriteLine($"   ? Immutable audit trail");
-            Console.WriteLine($"   ? Optimized for compliance (400 RU/s)");
+            Console.WriteLine($"? Audit container initialized: {databaseName}/{containerName}");
+            Console.WriteLine($"   ?? Immutable audit trail");
+            Console.WriteLine($"   ?? Optimized for compliance (400 RU/s)");
             Console.WriteLine($"   ? No TTL (permanent retention)");
         }
         catch (Exception ex)

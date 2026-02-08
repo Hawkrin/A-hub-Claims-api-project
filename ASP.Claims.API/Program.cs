@@ -108,7 +108,7 @@ app.MapScalarApiReference(options =>
 {
     options.Title = "Claims API";
     options.Theme = ScalarTheme.Default;
-    options.DarkMode = false;
+    options.DarkMode = true;
 
     var baseUrl = builder.Configuration["ClaimsApiBaseUrlPath"];
     if (!string.IsNullOrWhiteSpace(baseUrl))
@@ -125,23 +125,9 @@ app.UseSwaggerUI();
 // ENDPOINTS
 // ============================================================================
 
-// Root endpoint
-if (app.Environment.IsDevelopment())
-{
-    // Development: Redirect to Scalar API documentation
-    app.MapGet("/", () => Results.Redirect("/scalar/v1"));
-}
-else
-{
-    // Production: Return API info
-    app.MapGet("/", () => Results.Ok(new
-    {
-        service = "Claims API",
-        status = "Running",
-        version = "v1",
-        documentation = "/swagger"
-    }));
-}
+// Root endpoint - redirect to Scalar API documentation
+app.MapGet("/", () => Results.Redirect("/scalar/v1"))
+   .ExcludeFromDescription(); // Hide from OpenAPI spec
 
 // Map controllers
 app.MapControllers();
