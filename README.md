@@ -1,46 +1,131 @@
-# Projektarkitektur och Valda Bibliotek
+# ASP.Claims API - Insurance Claims Management System
 
-## Översikt
+## 📋 Overview
 
-Detta projekt är en modern Blazor-applikation för hantering av skadeärenden (claims). Applikationen är uppdelad i tydliga lager enligt best practices för skalbarhet, testbarhet och vidareutveckling.
+This project is a modern insurance claims management API built with **.NET 9**, **Azure Cosmos DB**, **Redis Pub/Sub**, and **.NET Aspire** for microservice orchestration. The system handles three types of claims: property, vehicle, and travel, with automated status evaluation, event-driven notifications, and comprehensive audit logging.
 
 ---
 
-## Arkitektur
+## 🏗️ System Architecture
+
+The project consists of multiple services that communicate via **Redis Pub/Sub**:
 
 ```text
-ASP.Claims.API/
-├── API/
-│   ├── Controllers/           # API-kontrollers (PropertyClaimController, VehicleClaimController, etc.)
-│   ├── DTOs/                  # Data Transfer Objects för API requests/responses
-│   ├── Validators/            # FluentValidation-klasser för DTOs
-│   └── Resources/             # Lokalisering och felmeddelanden
-├── Application/
-│   ├── CQRS/
-│   │   ├── Claims/
-│   │   │   ├── Commands/          # Command-objekt för claims
-│   │   │   ├── Queries/           # Query-objekt för claims
-│   │   │   ├── CommandHandlers/   # Command-handlers för claims
-│   │   │   └── QueryHandlers/     # Query-handlers för claims
-│   ├── Interfaces/            # Tjänste- och repositorygränssnitt
-│   ├── Services/              # Affärslogik, t.ex. ClaimStatusEvaluator
-│   └── Profiles/              # AutoMapper-profiler (om används)
-├── Domain/
-│   ├── Entities/              # Domänmodeller (Claim, PropertyClaim, VehicleClaim, etc.)
-│   ├── Enums/                 # Enum-typer för domänen (ClaimStatus, ClaimType, etc.)
-│   └── ...                    # Annan domänlogik
-├── Infrastructures/
-│   ├── Repositories/          # Implementering av datalager (InMemoryClaimRepository, etc.)
-│   └── ...                    # Annan infrastruktur (databaser, externa tjänster)
-├── Middleware/
-│   ├── Filters/               # Action filters (t.ex. FluentValidationActionFilter)
-│   └── ExceptionHandlingMiddleware.cs # Global felhantering
-├── Program.cs                 # Applikationens startpunkt och DI-setup
-├── appsettings.json           # Konfigurationsfil
-└── ...                        # Övriga rotfiler
+┌─────────────────────────────────────────────────────────────────┐
+│                         ASP.Claims.API                          │
+│  (Main Application - REST API with CQRS + Event Publishing)    │
+└───────────┬─────────────────────────────────────┬───────────────┘
+            │                                     │
+            │ Publishes Events via Redis          │ HTTP Requests
+            │                                     │
+            ▼                                     ▼
+    ┌───────────────┐                    ┌──────────────┐
+    │  Redis Pub/Sub │                    │   Clients    │
+    │   (Messaging)  │                    │ (Blazor, etc)│
+    └───────┬────────┘                    └──────────────┘
+            │
+            │ Subscribes to Events
+            │
+    ┌───────┴──────────────────────┐
+    │                              │
+    ▼                              ▼
+┌─────────────────────┐  ┌──────────────────────┐
+│ NotificationsWorker │  │    AuditWorker       │
+│  (Background Svc)   │  │  (Background Svc)    │
+│                     │  │                      │
+│ • Claim Escalated   │  │ • Logs all events    │
+│ • Fraud Detected    │  │ • Stores audit trail │
+│ • Sends Alerts      │  │ • Cosmos DB storage  │
+└─────────────────────┘  └──────────────────────┘
 ```
 
-```text2
+### Services
+
+1. **ASP.Claims.API** - Main REST API
+   - CQRS with MediatR
+   - JWT authentication
+   - FluentValidation
+   - Event publishing via Redis
+
+2. **ASP.Claims.AuditWorker** - Audit and logging worker
+   - Subscribes to all events
+   - Stores audit logs in Cosmos DB
+   - Tracks status changes, escalations, and fraud warnings
+
+3. **ASP.Claims.NotificationsWorker** - Notification worker
+   - Sends notifications for escalated claims
+   - Fraud alerts
+   - (Can be extended with email, SMS, push notifications)
+
+4. **ASP.Claims.AppHost** - Aspire orchestration
+   - Configures all services
+   - Manages Redis, Cosmos DB
+   - Development environment setup
+
+---
+
+## 📂 Project Structure
+
+```text
+ASP.Claims.sln
+├── ASP.Claims.AppHost/                    # .NET Aspire orchestrator
+│   ├── Program.cs                         # Aspire host configuration
+│   └── appsettings.json                   # Orchestrator settings
+│
+├── ASP.Claims.API/                        # Main API project
+│   ├── API/
+│   │   ├── Controllers/                   # API controllers
+│   │   ├── DTOs/                          # Data Transfer Objects
+│   │   ├── Validators/                    # FluentValidation classes
+│   │   └── Resources/                     # Localization
+│   ├── Application/
+│   │   ├── CQRS/
+│   │   │   └── Claims/
+│   │   │       ├── Commands/              # Command objects
+│   │   │       ├── Queries/               # Query objects
+│   │   │       ├── CommandHandlers/       # Command handlers
+│   │   │       └── QueryHandlers/         # Query handlers
+│   │   ├── Interfaces/                    # Service interfaces
+│   │   ├── Services/                      # Business logic
+│   │   └── Profiles/                      # AutoMapper profiles
+│   ├── Domain/
+│   │   ├── Entities/                      # Domain models
+│   │   ├── Enums/                         # Domain enums
+│   │   └── Events/                        # Domain events
+│   ├── Infrastructure/
+│   │   ├── Repositories/                  # Data layer
+│   │   └── Messaging/                     # Event publishing
+│   ├── Middleware/                        # Middleware & filters
+│   ├── Extensions/                        # Service extensions
+│   ├── Settings/                          # Configuration classes
+│   └── Program.cs                         # Application entry point
+│
+├── ASP.Claims.NotificationsWorker/        # Notification service
+│   ├── Worker.cs                          # BackgroundService
+│   └── Program.cs                         # Worker host
+│
+├── ASP.Claims.AuditWorker/                # Audit logging service
+│   ├── Worker.cs                          # BackgroundService
+│   ├── Models/                            # Audit models
+│   ├── Repositories/                      # Audit repositories
+│   └── Program.cs                         # Worker host
+│
+├── ASP.Claims.ServiceDefaults/            # Shared defaults
+│   ├── Extensions.cs                      # OpenTelemetry, health
+│   └── Events/                            # Shared event definitions
+│       ├── ClaimEscalatedEvent.cs
+│       ├── ClaimFraudFlaggedEvent.cs
+│       └── ClaimStatusChangedEvent.cs
+│
+└── ASP.Claims.API.Test/                   # Test project
+    ├── ControllerTests/
+    ├── HandlerTests/
+    └── RepositoryTests/
+```
+
+### Request Flow
+
+```text
 User
   ↓
 [Validation Filter]
@@ -51,95 +136,221 @@ API Controller (DTO)
   ↓
 AutoMapper (DTO → Command)
   ↓
-Application Layer (CQRS)
+Application Layer (CQRS Handler)
   ↓
-[Business Logic, Domain Events]
+[Business Logic, Status Evaluation]
   ↓
-AutoMapper (Command → Entity)
+Repository → Cosmos DB (Save Claim)
   ↓
-Repository
+[Event Publisher] → Redis (Fire-and-Forget)
   ↓
-Database
+Background Workers (Subscribe to Events)
+  ├─ NotificationsWorker → Send Notifications
+  └─ AuditWorker → Persist Audit Logs
 ```
-
-Projektet är organiserat enligt följande lager och mappar:
-
--	**API**        
-    - *Controllers*: API-kontrollers för hantering av HTTP-förfrågningar (t.ex. PropertyClaimController, VehicleClaimController)      
-    - *DTOs*: Data Transfer Objects för kommunikation mellan klient och server      
-    - *Validators*: Valideringsklasser för DTOs med FluentValidation      
-- **Application**  
-    - *CQRS*: Kommandon, queries och handlers för affärslogik (t.ex. CreatePropertyClaimCommand, GetAllClaimsQuery, ClaimQueryHandler)
-    - *Interfaces*: Tjänste- och repositorygränssnitt (t.ex. IClaimRepository)
-    - *Services*: Implementering av affärslogik och tjänster (t.ex. ClaimStatusEvaluator)
--	**Domain**    
-    - *Entities*: Domänmodeller (t.ex. Claim, PropertyClaim, VehicleClaim)  
-    - *Enums*: Enum-typer för domänen (t.ex. ClaimStatus, ClaimType)  
-- **Infrastructures**  
-    - *Repositories*: Implementering av datalager och tekniska beroenden (t.ex. InMemoryClaimRepository)  
-- **Middleware**  
-    -  *Filters*: Globala filter för t.ex. validering (FluentValidationActionFilter)  
-    - *ExceptionHandling*: Global felhantering (ExceptionHandlingMiddleware)  
--	**Resources**  
-    -	*Resursfiler* för lokalisering och felmeddelanden  
-
-### Flöde
-
-1.	API-kontroller tar emot och validerar inkommande data via DTOs och FluentValidation.
-2.	CQRS-handlers i Application-lagret hanterar affärslogik och använder tjänster (t.ex. ClaimStatusEvaluator).
-3.	Repositories i Infrastructure-lagret sköter dataåtkomst.
-4.	Domänmodeller och enum-typer ligger i Domain-lagret.
-5.	Felhantering och lokalisering hanteras via Middleware och Resources.
 
 ---
 
-## Valda Bibliotek
+## 🔄 Event-Driven Architecture (Redis Pub/Sub)
 
-### Api.Versioning
+### System Architecture
 
-**Syfte:**  
-Hantera och exponera olika versioner av API:et.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ASP.Claims.AppHost                       │
+│                  (Aspire Orchestrator)                      │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ├─── Starts Redis Container (Docker)
+         ├─── Starts API (connects to Redis)
+         ├─── Starts NotificationsWorker (connects to Redis)
+         └─── Starts AuditWorker (connects to Redis)
 
-**Varför:**  
-Möjliggör vidareutveckling och bakåtkompatibilitet, tydlig versionering i URL och headers.
+┌──────────────────────────────────────────────────────────────┐
+│                      Redis Container                         │
+│              (In-Memory Pub/Sub Message Bus)                 │
+│                                                              │
+│  Channels:                                                   │
+│    • ClaimEscalatedEvent                                    │
+│    • ClaimFraudFlaggedEvent                                 │
+│    • ClaimStatusChangedEvent                                │
+└──────────────────────────────────────────────────────────────┘
+         ▲                    ▲                    ▲
+         │ Publish            │ Subscribe          │ Subscribe
+         │                    │                    │
+    ┌────┴────┐         ┌────┴────┐         ┌────┴────┐
+    │   API   │         │ Notif.  │         │  Audit  │
+    │         │         │ Worker  │         │ Worker  │
+    └─────────┘         └─────────┘         └─────────┘
+```
+
+### Event Flow Example
+
+**Scenario:** User creates a high-value property claim
+
+```
+1. User → POST /api/v1/claims/property (EstimatedDamageCost: $50,000)
+         ↓
+2. API → CreatePropertyClaimHandler
+         ├─ Evaluates status → ClaimStatus.Escalated (high value)
+         ├─ Saves to Cosmos DB ✅
+         └─ Fires background task to publish events
+               ↓
+3. API → ClaimEventPublisher.PublishClaimEventsAsync
+         ├─ Detects Escalated flag
+         └─ Publishes ClaimEscalatedEvent to Redis
+               ↓
+4. Redis → Broadcasts message to channel "ClaimEscalatedEvent"
+         ↓                           ↓
+5a. NotificationsWorker       5b. AuditWorker
+    ├─ Receives event             ├─ Receives event
+    ├─ Logs notification          ├─ Saves to AuditDb (Cosmos)
+    └─ (TODO: send email)         └─ Logs audit trail
+
+6. User ← Returns 201 Created (API doesn't wait for workers)
+```
+
+**Timeline:**
+- **0-200ms**: API saves claim, returns response
+- **200-500ms**: Event published to Redis (async)
+- **500ms+**: Workers process events independently
+
+### Components
+
+- **Redis**: In-memory pub/sub message bus for asynchronous event broadcasting
+- **API**: Publishes domain events when claims are created or updated
+- **NotificationsWorker**: Background service that sends notifications for escalated/fraud events
+- **AuditWorker**: Background service that persists immutable audit logs to separate Cosmos DB
+
+---
+
+## 📚 Selected Libraries
+
+### Asp.Versioning
+
+**Purpose:** Handle and expose different versions of the API.
+
+**Why:** Enables continuous development and backward compatibility, clear versioning in URLs and headers.
 
 ### MediatR
 
-**Syfte:**  
-Implementerar CQRS-mönstret med kommandon, queries och handlers.
+**Purpose:** Implements the CQRS pattern with commands, queries, and handlers.
 
-**Varför:**  
-Tydlig separation av affärslogik och presentation, enkel testning och vidareutveckling.
+**Why:** Clear separation of business logic and presentation, easy testing and maintenance.
 
 ### FluentValidation
 
-**Syfte:**  
-Definiera och applicera valideringsregler på domänmodeller på ett tydligt och återanvändbart sätt.
+**Purpose:** Define and apply validation rules on domain models in a clear and reusable way.
 
-**Varför:**  
-- Separera valideringslogik från modeller och UI.
-- Stöd för komplexa regler och cross-property validering.
-- Lätt att testa och underhålla.
-
----
+**Why:**
+- Separate validation logic from models and UI
+- Support for complex rules and cross-property validation
+- Easy to test and maintain
 
 ### FluentResults
 
-**Syfte:**  
-Standardisera hanteringen av resultat och fel från tjänster och repositorys.
+**Purpose:** Standardize the handling of results and errors from services and repositories.
 
-**Varför:**  
-- Tydlig separation mellan lyckade och misslyckade operationer utan undantag för kontrollflöde.
-- Underlättar felhantering och presentation av felmeddelanden i UI:t.
-- Stöd för att skicka med felkoder, meddelanden och orsaker.
+**Why:**
+- Clear separation between successful and failed operations without exceptions for control flow
+- Facilitates error handling and presentation of error messages
+- Support for sending error codes, messages, and reasons
+
+### AutoMapper
+
+**Purpose:** Simplify object-to-object mapping between DTOs, commands, and domain entities.
+
+**Why:**
+- Reduce boilerplate code
+- Maintain clear separation between API contracts and domain models
+- Easy to configure and test
+
+### StackExchange.Redis
+
+**Purpose:** High-performance Redis client for pub/sub messaging.
+
+**Why:**
+- Fast, in-memory message broker
+- Simple pub/sub pattern for event-driven architecture
+- Built-in connection pooling and retry logic
+
+### .NET Aspire
+
+**Purpose:** Cloud-native application orchestration and observability.
+
+**Why:**
+- Simplified local development with automatic service discovery
+- Built-in OpenTelemetry for distributed tracing
+- Dashboard for monitoring all services
+- Easy container management (Redis, Cosmos DB Emulator)
 
 ---
 
-## Sammanfattning
+## 🎯 Summary
 
-Denna arkitektur möjliggör:
+This architecture enables:
 
-•	Tydlig separation av ansvar (presentation, affärslogik, data, validering)
-•	Enhetlig och testbar felhantering med FluentResults
-•	Effektiv och återanvändbar validering med FluentValidation
-•	Skalbar och underhållbar kodbas för vidareutveckling
+• Clear separation of concerns (presentation, business logic, data, validation)  
+• Event-driven, asynchronous processing with Redis pub/sub  
+• Unified and testable error handling with FluentResults  
+• Efficient and reusable validation with FluentValidation  
+• Scalable and maintainable codebase for future development  
+• Comprehensive observability with .NET Aspire and OpenTelemetry  
+• Independent scaling of API and background workers  
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- .NET 9 SDK
+- Docker Desktop (for Redis and optional Cosmos DB)
+- Azure Cosmos DB Emulator or Azure Cosmos DB account
+- Visual Studio 2022 or VS Code
+
+### Running the Application
+
+```powershell
+# Clone the repository
+git clone https://github.com/Hawkrin/A-hub-Claims-api-project
+
+# Navigate to the solution
+cd A-hub-Claims-api-project
+
+# Start Cosmos DB Emulator (if using local)
+.\scripts\Start-CosmosEmulator.ps1
+
+# Run via Aspire (starts all services)
+dotnet run --project ASP.Claims.AppHost
+```
+
+### Accessing Services
+
+- **Aspire Dashboard**: http://localhost:15888
+- **API (Scalar)**: http://localhost:5021/scalar/v1
+- **API (Swagger)**: http://localhost:5021/swagger
+- **Health Check**: http://localhost:5021/health
+
+---
+
+## 📖 Documentation
+
+Additional documentation can be found in the repository:
+
+- [Event-Driven Architecture Details](PUBSUB_REDIS_SUMMARY.md)
+- [Production Deployment Guide](PRODUCTION_SETUP_GUIDE.md)
+- [Cosmos DB Setup](COSMOS_STANDALONE_EMULATOR_GUIDE.md)
+- [Aspire Configuration](ASPIRE_SETUP.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
