@@ -1,4 +1,4 @@
-﻿using ASP.Claims.API.API.Validators;
+using ASP.Claims.API.API.Validators;
 using ASP.Claims.API.Application;
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
@@ -20,8 +20,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<ITokenKeyProvider>(_ => new JwtKeyProvider(jwtKey));
         services.AddScoped<IClaimStatusEvaluator, ClaimStatusEvaluator>();
-        services.AddSingleton<IEventPublisher, RedisEventPublisher>();
-        services.AddScoped<IClaimEventPublisher, ClaimEventPublisher>();
 
         services.AddAutoMapper(cfg =>
         {
