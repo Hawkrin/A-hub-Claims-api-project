@@ -4,7 +4,8 @@ namespace ASP.Claims.API.API.DTOs.Claims;
 
 public record PropertyClaimDto
 {
-    public Guid Id { get; set; }
+
+    public Guid? Id { get; set; }
 
     public string Address { get; set; } = string.Empty;
 
@@ -16,5 +17,6 @@ public record PropertyClaimDto
 
     public string Description { get; set; } = string.Empty;
 
-    public ClaimStatus Status { get; set; } = ClaimStatus.None;
+
+    public ClaimStatus? Status { get; set; }
 }

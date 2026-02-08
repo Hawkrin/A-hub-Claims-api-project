@@ -19,12 +19,14 @@ public class PropertyClaimHandlerLoggingTests
     private readonly Mock<IClaimRepository> _mockRepository;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<IClaimStatusEvaluator> _mockStatusEvaluator;
+    private readonly Mock<IClaimEventPublisher> _mockEventPublisher;
 
     public PropertyClaimHandlerLoggingTests()
     {
         _mockRepository = new Mock<IClaimRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockStatusEvaluator = new Mock<IClaimStatusEvaluator>();
+        _mockEventPublisher = new Mock<IClaimEventPublisher>();
     }
 
     #region Create Handler Tests
@@ -55,7 +57,7 @@ public class PropertyClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(claim, It.IsAny<IEnumerable<Claim>>())).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Ok());
 
-        var handler = new CreatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new CreatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -66,45 +68,6 @@ public class PropertyClaimHandlerLoggingTests
             log.Level == LogLevel.Information && 
             log.Message.Contains("Property claim created") &&
             log.Message.Contains(claim.Id.ToString()));
-    }
-
-    [Fact]
-    public async Task CreateHandler_LogsWarning_WhenHighValueClaimCreated()
-    {
-        // Arrange
-        var fakeLogger = new FakeLogger<CreatePropertyClaimHandler>();
-        var command = new CreatePropertyClaimCommand(
-            Address: "123 Main St",
-            PropertyDamageType: PropertyDamageType.Fire,
-            EstimatedDamageCost: 75000, // High value
-            ReportedDate: DateTime.UtcNow,
-            Description: "High value claim"
-        );
-
-        var claim = new PropertyClaim
-        {
-            Id = Guid.NewGuid(),
-            Address = "123 Main St",
-            EstimatedDamageCost = 75000,
-            Status = ClaimStatus.RequiresManualReview
-        };
-
-        _mockMapper.Setup(m => m.Map<PropertyClaim>(command)).Returns(claim);
-        _mockRepository.Setup(r => r.GetByType(ClaimType.Property)).ReturnsAsync([]);
-        _mockStatusEvaluator.Setup(e => e.Evaluate(claim, It.IsAny<IEnumerable<Claim>>())).Returns(ClaimStatus.RequiresManualReview);
-        _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Ok());
-
-        var handler = new CreatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
-
-        // Act
-        await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        var logEntries = fakeLogger.Collector.GetSnapshot();
-        Assert.Contains(logEntries, log => 
-            log.Level == LogLevel.Warning && 
-            log.Message.Contains("High-value property claim created") &&
-            log.Message.Contains("75,000")); // Just check for the number, not the currency symbol
     }
 
     [Fact]
@@ -127,7 +90,7 @@ public class PropertyClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(claim, It.IsAny<IEnumerable<Claim>>())).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Fail("Database error"));
 
-        var handler = new CreatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new CreatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -172,7 +135,7 @@ public class PropertyClaimHandlerLoggingTests
             .Returns(ClaimStatus.None); // New status
         _mockRepository.Setup(r => r.UpdateClaim(existingClaim)).ReturnsAsync(Result.Ok());
 
-        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -204,7 +167,7 @@ public class PropertyClaimHandlerLoggingTests
 
         _mockRepository.Setup(r => r.GetById(claimId)).ReturnsAsync((Claim?)null);
 
-        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -240,7 +203,7 @@ public class PropertyClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(existingClaim, It.IsAny<IEnumerable<Claim>>())).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.UpdateClaim(existingClaim)).ReturnsAsync(Result.Fail("Database error"));
 
-        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new UpdatePropertyClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);

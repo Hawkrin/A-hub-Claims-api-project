@@ -4,10 +4,24 @@ var builder = DistributedApplication.CreateBuilder(args);
 // Start the emulator via: .\scripts\Start-CosmosEmulator.ps1
 // Or from Start Menu: "Azure Cosmos DB Emulator"
 
+// Add Redis for pub/sub messaging (local dev container)
+var redis = builder.AddRedis("ServiceBus");
+
 // API Project - connects to manually-started standalone Cosmos DB Emulator at https://localhost:8081
-var api = builder.AddProject<Projects.ASP_Claims_API>("api")
+var api = builder.AddProject<Projects.ASP_Claims_API>("API")
     .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
-    .WithHttpEndpoint(port: 5020, name: "http-api")
-    .WithEnvironment("ClaimsApiBaseUrlPath", "http://localhost:5020/");
+    .WithHttpEndpoint(port: 5021, name: "http-api")
+    .WithEnvironment("ClaimsApiBaseUrlPath", "http://localhost:5021/")
+    .WithReference(redis);
+
+// Notifications Worker - subscribes to claim events for notifications
+builder.AddProject<Projects.ASP_Claims_NotificationsWorker>("notifications-worker")
+    .WithReference(redis);
+
+// Audit Worker - subscribes to claim events for audit logging
+// Connects to Cosmos DB Emulator for persistent audit trail
+builder.AddProject<Projects.ASP_Claims_AuditWorker>("audit-worker")
+    .WithReference(redis)
+    .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true");
 
 builder.Build().Run();

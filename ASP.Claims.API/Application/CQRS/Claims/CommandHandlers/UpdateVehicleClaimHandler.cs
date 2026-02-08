@@ -1,4 +1,4 @@
-﻿using ASP.Claims.API.Application.CQRS.Claims.Commands;
+using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
 using ASP.Claims.API.Resources;
@@ -13,12 +13,14 @@ public class UpdateVehicleClaimHandler(
     IClaimRepository repository, 
     IMapper mapper, 
     IClaimStatusEvaluator claimStatusEvaluator,
+    IClaimEventPublisher eventPublisher,
     ILogger<UpdateVehicleClaimHandler> logger) : 
     IRequestHandler<UpdateVehicleClaimCommand, Result<VehicleClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
     private readonly IMapper _mapper = mapper;
+    private readonly IClaimEventPublisher _eventPublisher = eventPublisher;
     private readonly ILogger<UpdateVehicleClaimHandler> _logger = logger;
 
     public async Task<Result<VehicleClaim>> Handle(UpdateVehicleClaimCommand command, CancellationToken cancellationToken)
@@ -42,8 +44,21 @@ public class UpdateVehicleClaimHandler(
             return Result.Fail<VehicleClaim>(updateResult.Errors[0].Message);
         }
 
+        // Publish domain events if status changed
         if (oldStatus != vehicleClaim.Status)
         {
+            _ = Task.Run(async () => 
+            {
+                try
+                {
+                    await _eventPublisher.PublishClaimEventsAsync(vehicleClaim, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Event publishing failed for claim {ClaimId} (non-critical)", vehicleClaim.Id);
+                }
+            }, cancellationToken);
+            
             _logger.LogInformation("Vehicle claim status changed: ClaimId={ClaimId}, OldStatus={OldStatus}, NewStatus={NewStatus}", 
                 vehicleClaim.Id, oldStatus, vehicleClaim.Status);
         }

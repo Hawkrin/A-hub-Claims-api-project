@@ -19,12 +19,14 @@ public class VehicleClaimHandlerLoggingTests
     private readonly Mock<IClaimRepository> _mockRepository;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<IClaimStatusEvaluator> _mockStatusEvaluator;
+    private readonly Mock<IClaimEventPublisher> _mockEventPublisher;
 
     public VehicleClaimHandlerLoggingTests()
     {
         _mockRepository = new Mock<IClaimRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockStatusEvaluator = new Mock<IClaimStatusEvaluator>();
+        _mockEventPublisher = new Mock<IClaimEventPublisher>();
     }
 
     [Fact]
@@ -51,7 +53,7 @@ public class VehicleClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(claim, null)).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Ok());
 
-        var handler = new CreateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new CreateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -83,7 +85,7 @@ public class VehicleClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(claim, null)).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Fail("Database error"));
 
-        var handler = new CreateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new CreateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -121,7 +123,7 @@ public class VehicleClaimHandlerLoggingTests
         _mockStatusEvaluator.Setup(e => e.Evaluate(existingClaim, null)).Returns(ClaimStatus.None);
         _mockRepository.Setup(r => r.UpdateClaim(existingClaim)).ReturnsAsync(Result.Ok());
 
-        var handler = new UpdateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new UpdateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -152,7 +154,7 @@ public class VehicleClaimHandlerLoggingTests
 
         _mockRepository.Setup(r => r.GetById(claimId)).ReturnsAsync((Claim?)null);
 
-        var handler = new UpdateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, fakeLogger);
+        var handler = new UpdateVehicleClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockStatusEvaluator.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);

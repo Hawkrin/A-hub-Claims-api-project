@@ -4,7 +4,7 @@ namespace ASP.Claims.API.API.DTOs.Claims;
 
 public record TravelClaimDto
 {
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     public Country Country { get; set; }
 
@@ -18,6 +18,6 @@ public record TravelClaimDto
 
     public string Description { get; set; } = string.Empty;
 
-    public ClaimStatus Status { get; set; } = ClaimStatus.None;
+    public ClaimStatus? Status { get; set; }
 }
 

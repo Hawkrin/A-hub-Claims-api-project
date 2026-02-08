@@ -5,7 +5,6 @@ using ASP.Claims.API.Extensions;
 using ASP.Claims.API.Middleware;
 using Microsoft.Azure.Cosmos;
 using Scalar.AspNetCore;
-using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,12 +30,11 @@ builder.ConfigureAppConfiguration();
 
 var jwtKey = await builder.Configuration.GetJwtKeyAsync(builder.Environment);
 
-// Add CosmosDB via Aspire (automatically configured via AppHost)
-// Only add CosmosDB client if NOT in Development or Test (using in-memory instead)
-if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Test"))
-{
-    builder.AddAzureCosmosClient("ClaimsDb");
-}
+// Add Redis for pub/sub messaging (Service Bus)
+builder.AddRedisClient("ServiceBus");
+
+// Add CORS
+builder.Services.AddCorsConfiguration(builder.Environment);
 
 builder.Services.AddJwtAndAppServices(jwtKey, builder.Configuration, builder.Environment);
 
@@ -66,7 +64,6 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 // Cosmos auto-provisioning and seeding
-// Initialize database and containers if using Cosmos DB
 var cosmosClient = app.Services.GetService<CosmosClient>();
 if (cosmosClient != null)
 {
@@ -104,29 +101,27 @@ else
 }
 
 // Configure middleware pipeline
-// Only use HTTPS redirection in Production (Aspire uses HTTP locally)
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
+app.UseCors();
 app.UseMiddleware<RequestCorrelationMiddleware>();
 app.UseHttpLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Configure Swagger and Scalar (must be after middleware, before endpoint mapping)
+// Configure Swagger and Scalar
 app.MapOpenApi();
 
-// Map Scalar at /scalar/v1 with proper configuration
 app.MapScalarApiReference(options =>
 {
     options.Title = "Claims API";
     options.Theme = ScalarTheme.Default;
     options.DarkMode = false;
     
-    // Configure server URL from environment (injected by Aspire)
     var baseUrl = builder.Configuration["ClaimsApiBaseUrlPath"];
     if (!string.IsNullOrWhiteSpace(baseUrl))
     {
@@ -138,32 +133,23 @@ app.MapScalarApiReference(options =>
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Redirect root to Scalar in Development/Staging
-app.Use(async (context, next) =>
+// Simple root endpoint
+if (app.Environment.IsDevelopment())
 {
-    if (context.Request.Path == "/")
+    // Development: Redirect to Scalar
+    app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+}
+else
+{
+    // Production: Return API info
+    app.MapGet("/", () => Results.Ok(new
     {
-        if (context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment() ||
-            context.RequestServices.GetRequiredService<IHostEnvironment>().IsStaging())
-        {
-            context.Response.Redirect("/scalar/v1");
-            return;
-        }
-        
-        // In production, return API info instead
-        context.Response.StatusCode = 200;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            service = "Claims API",
-            status = "Running",
-            version = "v1",
-            documentation = "Scalar docs not available in production"
-        });
-        return;
-    }
-    await next();
-});
+        service = "Claims API",
+        status = "Running",
+        version = "v1",
+        documentation = "/swagger"
+    }));
+}
 
 app.MapControllers();
 app.Run();

@@ -4,7 +4,7 @@ namespace ASP.Claims.API.API.DTOs.Claims;
 
 public record VehicleClaimDto
 {
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     public string RegistrationNumber { get; set; } = string.Empty;
 
@@ -14,5 +14,5 @@ public record VehicleClaimDto
 
     public string Description { get; set; } = string.Empty;
 
-    public ClaimStatus Status { get; set; } = ClaimStatus.None;
+    public ClaimStatus? Status { get; set; }
 }

@@ -12,12 +12,14 @@ public class CreateVehicleClaimHandler(
     IClaimRepository repository, 
     IMapper mapper, 
     IClaimStatusEvaluator claimStatusEvaluator,
+    IClaimEventPublisher eventPublisher,
     ILogger<CreateVehicleClaimHandler> logger) : 
     IRequestHandler<CreateVehicleClaimCommand, Result<VehicleClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
     private readonly IMapper _mapper = mapper;
+    private readonly IClaimEventPublisher _eventPublisher = eventPublisher;
     private readonly ILogger<CreateVehicleClaimHandler> _logger = logger;
 
     public async Task<Result<VehicleClaim>> Handle(CreateVehicleClaimCommand command, CancellationToken cancellationToken)
@@ -31,6 +33,19 @@ public class CreateVehicleClaimHandler(
             _logger.LogError("Failed to create vehicle claim: {Error}", saveResult.Errors[0].Message);
             return Result.Fail<VehicleClaim>(saveResult.Errors[0].Message);
         }
+
+        // Publish domain events (fire-and-forget, non-blocking, non-critical)
+        _ = Task.Run(async () => 
+        {
+            try
+            {
+                await _eventPublisher.PublishClaimEventsAsync(claim, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Event publishing failed for claim {ClaimId} (non-critical)", claim.Id);
+            }
+        }, cancellationToken);
 
         _logger.LogInformation("Vehicle claim created: ClaimId={ClaimId}, RegistrationNumber={RegNumber}, Location={Location}, Status={Status}", 
             claim.Id, command.RegistrationNumber, command.PlaceOfAccident, claim.Status);

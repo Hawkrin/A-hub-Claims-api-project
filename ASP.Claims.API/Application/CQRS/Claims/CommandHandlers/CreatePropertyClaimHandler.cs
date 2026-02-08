@@ -1,4 +1,4 @@
-﻿namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
+namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 
 using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
@@ -12,14 +12,15 @@ public class CreatePropertyClaimHandler(
     IClaimRepository repository, 
     IMapper mapper, 
     IClaimStatusEvaluator claimStatusEvaluator,
+    IClaimEventPublisher eventPublisher,
     ILogger<CreatePropertyClaimHandler> logger) : 
     IRequestHandler<CreatePropertyClaimCommand, Result<PropertyClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IMapper _mapper = mapper;
     private readonly IClaimStatusEvaluator _claimStatusEvaluator = claimStatusEvaluator;
+    private readonly IClaimEventPublisher _eventPublisher = eventPublisher;
     private readonly ILogger<CreatePropertyClaimHandler> _logger = logger;
-    private const decimal HighValueThreshold = 50000m;
 
     public async Task<Result<PropertyClaim>> Handle(CreatePropertyClaimCommand command, CancellationToken cancellationToken)
     {
@@ -37,17 +38,23 @@ public class CreatePropertyClaimHandler(
             return Result.Fail<PropertyClaim>(saveResult.Errors[0].Message);
         }
 
-        // Log high-value claims for business monitoring and fraud detection
-        if (command.EstimatedDamageCost >= HighValueThreshold)
+        // Publish domain events (fire-and-forget, non-blocking, non-critical)
+        _ = Task.Run(async () => 
         {
-            _logger.LogWarning("High-value property claim created: ClaimId={ClaimId}, Amount={Amount:C}, Address={Address}, Status={Status}", 
-                claim.Id, command.EstimatedDamageCost, command.Address, claim.Status);
-        }
-        else
-        {
-            _logger.LogInformation("Property claim created: ClaimId={ClaimId}, Amount={Amount:C}, Status={Status}", 
-                claim.Id, command.EstimatedDamageCost, claim.Status);
-        }
+            try
+            {
+                await _eventPublisher.PublishClaimEventsAsync(claim, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Event publishing failed for claim {ClaimId} (non-critical)", claim.Id);
+            }
+        }, cancellationToken);
+
+        _logger.LogInformation(
+            "Property claim created: ClaimId={ClaimId}, Amount={Amount:C}, Status={Status}", 
+            claim.Id, command.EstimatedDamageCost, claim.Status
+        );
 
         return Result.Ok(claim);
     }

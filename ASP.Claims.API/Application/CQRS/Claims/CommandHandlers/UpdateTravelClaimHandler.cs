@@ -1,4 +1,4 @@
-﻿using ASP.Claims.API.Application.CQRS.Claims.Commands;
+using ASP.Claims.API.Application.CQRS.Claims.Commands;
 using ASP.Claims.API.Application.Interfaces;
 using ASP.Claims.API.Domain.Entities;
 using ASP.Claims.API.Resources;
@@ -12,11 +12,13 @@ namespace ASP.Claims.API.Application.CQRS.Claims.CommandHandlers;
 public class UpdateTravelClaimHandler(
     IClaimRepository repository, 
     IMapper mapper,
+    IClaimEventPublisher eventPublisher,
     ILogger<UpdateTravelClaimHandler> logger) : 
     IRequestHandler<UpdateTravelClaimCommand, Result<TravelClaim>>
 {
     private readonly IClaimRepository _repository = repository;
     private readonly IMapper _mapper = mapper;
+    private readonly IClaimEventPublisher _eventPublisher = eventPublisher;
     private readonly ILogger<UpdateTravelClaimHandler> _logger = logger;
 
     public async Task<Result<TravelClaim>> Handle(UpdateTravelClaimCommand command, CancellationToken cancellationToken)
@@ -38,8 +40,21 @@ public class UpdateTravelClaimHandler(
             return Result.Fail<TravelClaim>(updateResult.Errors[0].Message);
         }
 
+        // Publish domain events if status changed
         if (oldStatus != travelClaim.Status)
         {
+            _ = Task.Run(async () => 
+            {
+                try
+                {
+                    await _eventPublisher.PublishClaimEventsAsync(travelClaim, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Event publishing failed for claim {ClaimId} (non-critical)", travelClaim.Id);
+                }
+            }, cancellationToken);
+            
             _logger.LogInformation("Travel claim status changed: ClaimId={ClaimId}, OldStatus={OldStatus}, NewStatus={NewStatus}", 
                 travelClaim.Id, oldStatus, travelClaim.Status);
         }

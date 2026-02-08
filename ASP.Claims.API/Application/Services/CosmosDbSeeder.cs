@@ -8,21 +8,11 @@ namespace ASP.Claims.API.Application.Services;
 /// <summary>
 /// Seeds initial data into Cosmos DB for development/testing
 /// </summary>
-public class CosmosDbSeeder
+public class CosmosDbSeeder(IClaimRepository claimRepository, IUserRepository userRepository, ILogger<CosmosDbSeeder> logger)
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IClaimRepository _claimRepository;
-    private readonly ILogger<CosmosDbSeeder> _logger;
-
-    public CosmosDbSeeder(
-        IClaimRepository claimRepository,
-        IUserRepository userRepository,
-        ILogger<CosmosDbSeeder> logger)
-    {
-        _claimRepository = claimRepository;
-        _userRepository = userRepository;
-        _logger = logger;
-    }
+    private readonly IUserRepository _userRepository = userRepository;
+    private readonly IClaimRepository _claimRepository = claimRepository;
+    private readonly ILogger<CosmosDbSeeder> _logger = logger;
 
     /// <summary>
     /// Seeds default users and sample claims for development

@@ -18,11 +18,13 @@ public class TravelClaimHandlerLoggingTests
 {
     private readonly Mock<IClaimRepository> _mockRepository;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<IClaimEventPublisher> _mockEventPublisher;
 
     public TravelClaimHandlerLoggingTests()
     {
         _mockRepository = new Mock<IClaimRepository>();
         _mockMapper = new Mock<IMapper>();
+        _mockEventPublisher = new Mock<IClaimEventPublisher>();
     }
 
     [Fact]
@@ -52,7 +54,7 @@ public class TravelClaimHandlerLoggingTests
         _mockMapper.Setup(m => m.Map<TravelClaim>(command)).Returns(claim);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Ok());
 
-        var handler = new CreateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, fakeLogger);
+        var handler = new CreateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -85,7 +87,7 @@ public class TravelClaimHandlerLoggingTests
         _mockMapper.Setup(m => m.Map<TravelClaim>(command)).Returns(claim);
         _mockRepository.Setup(r => r.Save(claim)).ReturnsAsync(Result.Fail("Database error"));
 
-        var handler = new CreateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, fakeLogger);
+        var handler = new CreateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -126,7 +128,7 @@ public class TravelClaimHandlerLoggingTests
         }).Returns(existingClaim);
         _mockRepository.Setup(r => r.UpdateClaim(existingClaim)).ReturnsAsync(Result.Ok());
 
-        var handler = new UpdateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, fakeLogger);
+        var handler = new UpdateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
@@ -159,7 +161,7 @@ public class TravelClaimHandlerLoggingTests
 
         _mockRepository.Setup(r => r.GetById(claimId)).ReturnsAsync((Claim?)null);
 
-        var handler = new UpdateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, fakeLogger);
+        var handler = new UpdateTravelClaimHandler(_mockRepository.Object, _mockMapper.Object, _mockEventPublisher.Object, fakeLogger);
 
         // Act
         await handler.Handle(command, CancellationToken.None);

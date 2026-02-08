@@ -15,10 +15,13 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
     <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ASP.Claims.API\ASP.Claims.API.csproj" />
+    <ProjectReference Include="..\ASP.Claims.AuditWorker\ASP.Claims.AuditWorker.csproj" />
+    <ProjectReference Include="..\ASP.Claims.NotificationsWorker\ASP.Claims.NotificationsWorker.csproj" />
     <ProjectReference Include="..\ASP.Claims.ServiceDefaults\ASP.Claims.ServiceDefaults.csproj" />
   </ItemGroup>
 
