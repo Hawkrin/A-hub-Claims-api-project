@@ -54,9 +54,19 @@ public static class ServiceCollectionExtensions
         services.AddJwtAuthentication(jwtKey, jwtOptions);
         services.AddApplicationServices(jwtKey);
 
-        var useCosmosInDevOrTest = (env?.IsDevelopment() ?? false) || (env?.IsEnvironment("Test") ?? false);
+        // ============================================================================
+        // ENVIRONMENT-BASED REPOSITORY REGISTRATION
+        // ============================================================================
         
-        // Check if CosmosClient is registered (by Aspire or manually)
+        // TEST: Always use in-memory repositories (no external dependencies)
+        if (env?.IsEnvironment("Test") ?? false)
+        {
+            services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
+            services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+            return services;
+        }
+
+        // Check if Cosmos is configured
         var cosmosClientRegistered = services.Any(sd => sd.ServiceType == typeof(CosmosClient));
         
         var cosmosConfigured = cosmosClientRegistered || 
@@ -65,24 +75,15 @@ public static class ServiceCollectionExtensions
             && !string.IsNullOrWhiteSpace(configuration["CosmosDb:Containers:Claims"])
             && !string.IsNullOrWhiteSpace(configuration["CosmosDb:Containers:Users"]));
 
-        // COSMOS DB MODE (Default for local development with Aspire)
-        // The emulator will auto-start when running via Aspire AppHost
-        
-        // TO USE IN-MEMORY MODE INSTEAD: Uncomment the block below and comment out Cosmos setup
-        /*
-        // If dev/test and Cosmos isn't configured, fall back to in-memory.
-        // Production always uses Cosmos.
-        var useInMemory = useCosmosInDevOrTest && !cosmosConfigured;
-
-        if (useInMemory)
+        // DEVELOPMENT: Fallback to in-memory if Cosmos not configured
+        if (env?.IsDevelopment() == true && !cosmosConfigured)
         {
             services.AddSingleton<IClaimRepository, InMemoryClaimRepository>();
             services.AddSingleton<IUserRepository, InMemoryUserRepository>();
             return services;
         }
-        */
 
-        // If CosmosClient not already registered (e.g., not using Aspire), register it manually
+        // PRODUCTION or COSMOS-CONFIGURED DEVELOPMENT: Use Cosmos DB
         if (!cosmosClientRegistered)
         {
             var cosmosDbKey = KeyRetrievalService.GetCosmosDbKeyAsync(configuration, env!).GetAwaiter().GetResult();

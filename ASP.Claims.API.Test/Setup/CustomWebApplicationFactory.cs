@@ -1,26 +1,29 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using ASP.Claims.API.Application.Interfaces;
-using ASP.Claims.API.Infrastructures.Repositories;
 using Moq;
 
 namespace ASP.Claims.API.Test.Setup;
 
 /// <summary>
-/// Overrides the default WebApplicationFactory to configure test authentication.
-/// Uses Cosmos emulator if Cosmos config is present; otherwise forces in-memory repositories.
+/// Overrides the default WebApplicationFactory to configure test-specific services.
+/// Environment is set to "Test", which triggers in-memory repository registration in ServiceCollectionExtensions.
+/// This factory only needs to handle test-specific concerns: authentication and event publisher mocking.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Set environment to "Test" - this triggers in-memory repositories in ServiceCollectionExtensions
         builder.UseEnvironment("Test");
 
         builder.ConfigureServices((context, services) =>
         {
-            // Add test authentication
+            // ============================================================================
+            // TEST AUTHENTICATION (Replace JWT with Test Auth)
+            // ============================================================================
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = TestAuthHandler.TestScheme;
@@ -28,56 +31,76 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             })
             .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.TestScheme, options => { });
 
-            // Remove Redis client registration (not needed for tests)
-            var redisDescriptor = services.FirstOrDefault(d => 
+            // ============================================================================
+            // MOCK EVENT PUBLISHERS (Redis not available in tests)
+            // ============================================================================
+            
+            // Remove and replace IEventPublisher with mock
+            RemoveAndReplaceService(services, CreateMockEventPublisher());
+
+            // Remove and replace IClaimEventPublisher with mock
+            RemoveAndReplaceService(services, CreateMockClaimEventPublisher());
+
+            // ============================================================================
+            // REMOVE REDIS CLIENT (Not needed for tests)
+            // ============================================================================
+            RemoveService(services, d => 
                 d.ServiceType.Name.Contains("IConnectionMultiplexer") || 
                 d.ImplementationType?.Name.Contains("Redis") == true);
-            if (redisDescriptor != null)
-                services.Remove(redisDescriptor);
-
-            // Mock IEventPublisher to prevent Redis dependency in tests
-            var eventPublisherDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEventPublisher));
-            if (eventPublisherDescriptor != null)
-                services.Remove(eventPublisherDescriptor);
-            
-            var mockEventPublisher = new Mock<IEventPublisher>();
-            mockEventPublisher
-                .Setup(x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            services.AddSingleton(mockEventPublisher.Object);
-
-            // Mock IClaimEventPublisher as well
-            var claimEventPublisherDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IClaimEventPublisher));
-            if (claimEventPublisherDescriptor != null)
-                services.Remove(claimEventPublisherDescriptor);
-            
-            var mockClaimEventPublisher = new Mock<IClaimEventPublisher>();
-            mockClaimEventPublisher
-                .Setup(x => x.PublishClaimEventsAsync(It.IsAny<Domain.Entities.Claim>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            services.AddSingleton(mockClaimEventPublisher.Object);
-
-            var cfg = context.Configuration;
-            var cosmosConfigured = !string.IsNullOrWhiteSpace(cfg["CosmosDb:Account"])
-                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:DatabaseName"])
-                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:Containers:Claims"])
-                && !string.IsNullOrWhiteSpace(cfg["CosmosDb:Containers:Users"]);
-
-            if (cosmosConfigured)
-                return;
-
-            // Fallback to in-memory for tests when Cosmos isn't configured
-            // Use Scoped instead of Singleton to isolate tests
-
-            var claimDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IClaimRepository));
-            if (claimDescriptor != null)
-                services.Remove(claimDescriptor);
-            services.AddScoped<IClaimRepository, InMemoryClaimRepository>();
-
-            var userDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IUserRepository));
-            if (userDescriptor != null)
-                services.Remove(userDescriptor);
-            services.AddScoped<IUserRepository, InMemoryUserRepository>();
         });
+    }
+
+    /// <summary>
+    /// Creates a mock IEventPublisher that does nothing (no Redis dependency)
+    /// </summary>
+    private static IEventPublisher CreateMockEventPublisher()
+    {
+        var mock = new Mock<IEventPublisher>();
+        mock.Setup(x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return mock.Object;
+    }
+
+    /// <summary>
+    /// Creates a mock IClaimEventPublisher that does nothing (no Redis dependency)
+    /// </summary>
+    private static IClaimEventPublisher CreateMockClaimEventPublisher()
+    {
+        var mock = new Mock<IClaimEventPublisher>();
+        mock.Setup(x => x.PublishClaimEventsAsync(
+            It.IsAny<Domain.Entities.Claim>(), 
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return mock.Object;
+    }
+
+    /// <summary>
+    /// Helper method to remove all registrations of a service type and add a specific instance
+    /// </summary>
+    private static void RemoveAndReplaceService<TService>(
+        IServiceCollection services, 
+        TService implementation) 
+        where TService : class
+    {
+        var descriptors = services.Where(d => d.ServiceType == typeof(TService)).ToList();
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
+        services.AddSingleton(implementation);
+    }
+
+    /// <summary>
+    /// Helper method to remove services matching a predicate
+    /// </summary>
+    private static void RemoveService(
+        IServiceCollection services, 
+        Func<ServiceDescriptor, bool> predicate)
+    {
+        var descriptors = services.Where(predicate).ToList();
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
     }
 }
